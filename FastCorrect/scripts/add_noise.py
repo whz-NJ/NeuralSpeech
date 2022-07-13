@@ -12,7 +12,8 @@ sim_dict = {}
 vocab_1char = []
 vocab_2char = []
 
-with open('./scripts/sim_prun_char.txt', 'r', encoding='utf-8') as infile:
+# with open('./scripts/sim_prun_char.txt', 'r', encoding='utf-8') as infile:
+with open(r'C:\Code\NeuralSpeech\FastCorrect\scripts\sim_prun_char.txt', 'r', encoding='utf-8') as infile:
     for line in infile.readlines():
         line = line.strip()
         first_char = line[0]
@@ -34,7 +35,7 @@ with open('./scripts/sim_prun_char.txt', 'r', encoding='utf-8') as infile:
             continue
         sim_dict[first_char][vocab_length][vocab] = sim_vocab
 
-with open('./scripts/chinese_char_sim.txt', 'r', encoding='utf-8') as infile:
+with open(r'C:\Code\NeuralSpeech\FastCorrect\scripts\chinese_char_sim.txt', 'r', encoding='utf-8') as infile:
     for id, line in enumerate(infile.readlines()):
         line = line.strip()
         first_char = line[0]
@@ -58,10 +59,14 @@ beam_size = 1
 
 candidate_logit = [6, 5, 5, 4, 4, 3, 3, 3, 2, 2, 2, 1, 1, 1, 1]
 
-infile = sys.argv[1]
-outfile = sys.argv[2]
-random.seed(int(sys.argv[3]))
-np.random.seed(int(sys.argv[3]))
+# infile = sys.argv[1]
+# outfile = sys.argv[2]
+# random.seed(int(sys.argv[3]))
+# np.random.seed(int(sys.argv[3]))
+infile = r'C:\Code\NeuralSpeech\FastCorrect\label.txt'
+outfile = r'C:\Code\NeuralSpeech\FastCorrect\noised_label_7.txt'
+random.seed(7)
+np.random.seed(7)
 
 SUB = 0
 INS_L = 1

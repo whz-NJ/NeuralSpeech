@@ -44,8 +44,10 @@ def after_timeout():
 
 
 
-hypo_file = sys.argv[1]
-ref_file = sys.argv[2]
+# hypo_file = sys.argv[1] #output of gen_hypo_ref_file.py
+# ref_file = sys.argv[2] #output of gen_hypo_ref_file.py
+hypo_file = r'C:\Code\NeuralSpeech\FastCorrect\hypo.txt' #output of gen_hypo_ref_file.py
+ref_file = r'C:\Code\NeuralSpeech\FastCorrect\ref.txt' #output of gen_hypo_ref_file.py
 all_hypo_line = []
 all_ref_line = []
 

@@ -28,4 +28,5 @@ fairseq-train $DATA_PATH --task fastcorrect \
         --left-pad-source False \
         --encoder-layers 6 --decoder-layers 6 \
         --max-epoch 30 --update-freq 4 --fp16 --num-workers 8 \
+        --restore-file $PRETRAINED --reset-optimizer \
         --share-all-embeddings --encoder-embed-dim=512 --decoder-embed-dim=512

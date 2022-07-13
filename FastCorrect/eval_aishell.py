@@ -43,9 +43,10 @@ except:
     checkpoint_file = "checkpoint_best.pt"
 
 print("test {}/{}".format(model_name_or_path, checkpoint_file))
-data_name_or_path = # <Path-to-AISHELL1-Training-Binary-Data>
+# the model will only use the dictionary in data_name_or_path.
+data_name_or_path = "/root/fastcorrect/data/werdur_data_aishell.bin" # <Path-to-AISHELL1-Training-Binary-Data>
 bpe = "sentencepiece"
-sentencepiece_model = # <path-to-sentencepiece_model>, you can use arbitrary sentencepiece for our pretrained model since it is a char-level model
+sentencepiece_model = "/root/fastcorrect/sentencepiece/FastCorrect_zhwiki_sentencepiece.model" # <path-to-sentencepiece_model>, you can use arbitrary sentencepiece for our pretrained model since it is a char-level model
 
 commonset_dir = "./eval_data"
 res_dir = os.path.join(model_name_or_path, ("results_aishell" if (iter_decode_max_iter == -1) else ("results_aishell_b" + str(iter_decode_max_iter) + '_t' + str(edit_thre))).replace('results', 'results_' + str(test_epoch)))

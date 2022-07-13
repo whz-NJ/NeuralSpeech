@@ -6,7 +6,7 @@ cd $EXP_HOME
 
 cd $EXP_HOME
 
-DATA_PATH=   #<Path-to-Binary-Data>
+DATA_PATH=data/werdur_data_aishell.bin   #<Path-to-Binary-Data>
 export PYTHONPATH=$EXP_HOME/FastCorrect:$PYTHONPATH
 
 TEXT=data/werdur_data_aishell   #<Path-to-Data-with-duration>
@@ -17,7 +17,7 @@ dict_path=data/werdur_data_aishell/dict.CN_char.txt  #<path-to-dictionary>
 
 #We use shared dictionary extracted from training corpus
 
-$EXP_HOME/FC_utils/preprocess_fc.py --source-lang zh_CN --target-lang zh_CN_tgt \
+python $EXP_HOME/FC_utils/preprocess_fc.py --source-lang zh_CN --target-lang zh_CN_tgt \
     --task translation \
     --trainpref $TEXT/train --validpref $TEXT/valid \
     --padding-factor 8 \

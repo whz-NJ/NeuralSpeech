@@ -6,11 +6,11 @@ cd $EXP_HOME
 
 export MKL_THREADING_LAYER=GNU
 
-DATA_PATH=   #<Path-to-AISHELL1-Binary-Data>
+DATA_PATH=data/werdur_data_aishell.bin   #<Path-to-AISHELL1-Binary-Data>
 export PYTHONPATH=$EXP_HOME/FC_utils:$PYTHONPATH
 
-PRETRAINED=  #<PATH-to-Pretrain-Save-Dir>/checkpoint10.pt
-SAVE_DIR=   #<PATH-to-AISHELL1-Save-Dir>
+PRETRAINED=models/pretrain/fastcorrect_pretrain.pt  #<PATH-to-Pretrain-Save-Dir>/checkpoint10.pt
+SAVE_DIR=models/finetune   #<PATH-to-AISHELL1-Save-Dir>
 mkdir -p $SAVE_DIR
 fairseq-train $DATA_PATH --task fastcorrect \
         --arch fastcorrect --lr 5e-4 --lr-scheduler inverse_sqrt \
@@ -29,6 +29,6 @@ fairseq-train $DATA_PATH --task fastcorrect \
         --left-pad-target False \
         --left-pad-source False \
         --encoder-layers 6 --decoder-layers 6 \
-        --max-epoch 35 --update-freq 4 --fp16 --num-workers 4 \
+        --max-epoch 45 --update-freq 4 --fp16 --num-workers 4 \
         --restore-file $PRETRAINED --reset-optimizer \
         --share-all-embeddings --encoder-embed-dim=512 --decoder-embed-dim=512
