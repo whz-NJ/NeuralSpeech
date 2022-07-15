@@ -7,12 +7,15 @@ import os
 import sys
 import random
 import numpy as np
+import trie
+import preprocess
 
 sim_dict = {}
+trie_dict = trie.Trie()
 vocab_1char = []
 vocab_2char = []
 
-# with open('./scripts/sim_prun_char.txt', 'r', encoding='utf-8') as infile:
+#with open('./scripts/sim_prun_char.txt', 'r', encoding='utf-8') as infile:
 with open(r'C:\Code\NeuralSpeech\FastCorrect\scripts\sim_prun_char.txt', 'r', encoding='utf-8') as infile:
     for line in infile.readlines():
         line = line.strip()
@@ -35,6 +38,7 @@ with open(r'C:\Code\NeuralSpeech\FastCorrect\scripts\sim_prun_char.txt', 'r', en
             continue
         sim_dict[first_char][vocab_length][vocab] = sim_vocab
 
+#with open('./scripts/chinese_char_sim.txt', 'r', encoding='utf-8') as infile:
 with open(r'C:\Code\NeuralSpeech\FastCorrect\scripts\chinese_char_sim.txt', 'r', encoding='utf-8') as infile:
     for id, line in enumerate(infile.readlines()):
         line = line.strip()
@@ -54,7 +58,19 @@ with open(r'C:\Code\NeuralSpeech\FastCorrect\scripts\chinese_char_sim.txt', 'r',
             continue
         sim_dict[first_char][vocab_length][vocab] = sim_vocab
 
+with open(r'C:\Code\NeuralSpeech\FastCorrect\scripts\sim_prun_word.txt', 'r', encoding='utf-8') as infile:
+    for id, line in enumerate(infile.readlines()):
+        line = line.strip()
+        vocab, sim_vocab = line.split('\t')
+        words = preprocess.normalize(vocab)
+        sim_words = preprocess.normalize(sim_vocab)
+        if len(words) != 1 or len(sim_words) != 1:
+            print("skip: " + line)
+            continue
+        trie_dict.insert(preprocess.tokenize(words[0]), preprocess.tokenize(sim_words[0]))
+
 noise_ratio = 0.15
+#noise_ratio = 1.1
 beam_size = 1
 
 candidate_logit = [6, 5, 5, 4, 4, 3, 3, 3, 2, 2, 2, 1, 1, 1, 1]
@@ -75,7 +91,7 @@ DEL = 3
 all_op = [SUB, INS_L, INS_R, DEL]
 prob_op = [4/5, 1/20, 1/20, 1/10]
 
-def add_noise(token, op, candidate, unuse=None):
+def add_char_noise(token, op, candidate, unuse=None):
     if op == SUB:
         if candidate is None:
             random_token = np.random.choice(vocab_1char)
@@ -94,8 +110,31 @@ def add_noise(token, op, candidate, unuse=None):
     else:
         raise ValueError("impossible op {}!".format(op))
 
+def add_tokens_noise(token, op, candidate, unuse=None):
+    if op == SUB:
+        if candidate is None:
+            random_token = np.random.choice(vocab_1char)
+            return 1, 1, random_token, None
+        else:
+            candidate_len = len(candidate)
+            if candidate_len > len(candidate_logit):
+                candidate_len = len(candidate_logit)
+            prob_candidate = [i/sum(candidate_logit[:candidate_len]) for i in candidate_logit[:candidate_len]]
+            matched_info = np.random.choice(candidate, p=prob_candidate)
+            return matched_info.matched_tokens_num, matched_info.matched_chars_num, matched_info.sim_words, None
+
+    elif op == DEL:
+        return 1, 1, "", None
+    elif op == INS_L:
+        random_token = np.random.choice(vocab_1char)
+        return 1, 1, random_token + token, random_token
+    elif op == INS_R:
+        random_token = np.random.choice(vocab_1char)
+        return 1, 1, token + random_token, random_token
+    else:
+        raise ValueError("impossible op {}!".format(op))
 def noise_meta_beam(token, meta_noise, candidate):
-    return add_noise(token, meta_noise, candidate, None)
+    return add_char_noise(token, meta_noise, candidate, None)
 
 
 import time
@@ -110,10 +149,11 @@ with open(infile, 'r', encoding='utf-8') as infile:
             if not line:
                 continue
             new_lines = ["" for _ in range(beam_size)]
-            sen_length = len(line)
+            tokens = preprocess.tokenize(line)
+            tokens_num = len(tokens)
             i = 0
-            while i < sen_length:
-                tok = line[i]
+            while i < tokens_num:
+                tok = tokens[i]
                 if tok == " ":
                     i += 1
                     for j in range(beam_size):
@@ -121,15 +161,23 @@ with open(infile, 'r', encoding='utf-8') as infile:
                     continue
 
                 if random.random() < noise_ratio:
+                    matched_info = trie_dict.get_pairs(tokens[i:])
+                    if len(matched_info) > 0:
+                        meta_noise = np.random.choice(all_op, p=prob_op)
+                        #meta_noise = SUB
+                        matched_tokens_num, matched_chars_num, sim_word, meta_ins = add_tokens_noise(tok, meta_noise, matched_info)
+                        new_lines[modify_beam] += ''.join(sim_word)
+                        i += matched_chars_num
+                        continue
                     if tok not in sim_dict.keys():
                         modify_beam = 0
                         meta_noise = np.random.choice(all_op, p=prob_op)
                         meta_new_token, meta_ins = noise_meta_beam(tok, meta_noise, None)
                         new_lines[modify_beam] += meta_new_token
                         continue
-                    if sen_length - i >= 1:
-                        if line[i: i+1] in sim_dict[tok][1].keys():
-                            tok = line[i: i+1]
+                    if tokens_num - i >= 1:
+                        if tokens[i] in sim_dict[tok][1].keys():
+                            tok = tokens[i]
                             i += 1
                             modify_beam = 0
                             meta_noise = np.random.choice(all_op, p=prob_op)

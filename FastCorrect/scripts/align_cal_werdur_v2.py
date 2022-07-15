@@ -41,25 +41,48 @@ def set_timeout(num, callback):
 def after_timeout():
     pass
 
-
-
-
+import preprocess
+from g2pM import G2pM
+model = G2pM()
 # hypo_file = sys.argv[1] #output of gen_hypo_ref_file.py
 # ref_file = sys.argv[2] #output of gen_hypo_ref_file.py
-hypo_file = r'C:\Code\NeuralSpeech\FastCorrect\hypo.txt' #output of gen_hypo_ref_file.py
-ref_file = r'C:\Code\NeuralSpeech\FastCorrect\ref.txt' #output of gen_hypo_ref_file.py
+hypo_file = r'C:\Code\NeuralSpeech\FastCorrect\hypo7.txt' #output of gen_hypo_ref_file.py
+ref_file = r'C:\Code\NeuralSpeech\FastCorrect\ref7.txt' #output of gen_hypo_ref_file.py
+
+g2pM_dict = {}
 all_hypo_line = []
 all_ref_line = []
-
 print("Loading: ", hypo_file)
 with open(hypo_file, 'r', encoding='utf-8') as infile:
     for line in infile.readlines():
-        all_hypo_line.append(line.strip().split())
+        tokens = line.strip().split()
+        all_hypo_line.append(tokens)
+        for token in tokens:
+            if token in g2pM_dict.keys():
+                continue
+            if len(token) == 1:
+                if '\u4e00' <= token[0] <= '\u9fa5': #汉字
+                    g2pM_dict[token] = preprocess.unify_pinyin(model(token, tone=False, char_split=True)[0])
+                else:
+                    g2pM_dict[token] = token[0].lower()
+            else: #英文单词
+                g2pM_dict[token] = token.lower()
 
 print("Loading: ", ref_file)
 with open(ref_file, 'r', encoding='utf-8') as infile:
     for line in infile.readlines():
-        all_ref_line.append(line.strip().split())
+        tokens = line.strip().split()
+        all_ref_line.append(tokens)
+        for token in tokens:
+            if token in g2pM_dict.keys():
+                continue
+            if len(token) == 1:
+                if '\u4e00' <= token[0] <= '\u9fa5': #汉字
+                    g2pM_dict[token] = preprocess.unify_pinyin(model(token, tone=False, char_split=True)[0])
+                else:
+                    g2pM_dict[token] = token[0].lower()
+            else: #英文单词
+                g2pM_dict[token] = token.lower()
 
 def init_number_vec(len_hyp, len_ref):
     return_vec = []
@@ -253,7 +276,64 @@ def cal_charwer(hypo_string, ref_string):
     return cost_matrix[len_hyp][len_ref]
 
 def cal_charwer_zh(hypo_string, ref_string):
-    return 0
+    if hypo_string == []:
+        hypo_string = ""
+    if ref_string == []:
+        ref_string = ""
+    hypo_string = "".join(hypo_string.strip().split())
+    ref_string = "".join(ref_string.strip().split())
+    #print(hypo_string)
+    #print(ref_string)
+    if hypo_string:
+        hypo_string = "".join([g2pM_dict.get(i, i) for i in hypo_string])
+        #hypo_string = "".join(model(hypo_string, tone=False, char_split=False))
+    if ref_string:
+        ref_string = "".join([g2pM_dict.get(i, i) for i in ref_string])
+        #ref_string = "".join(model(ref_string, tone=False, char_split=False))
+    #print(hypo_string)
+    #print(ref_string)
+    if hypo_string == "":
+        return len(ref_string)
+    if ref_string == "":
+        return len(hypo_string)
+
+    len_hyp = len(hypo_string)
+    len_ref = len(ref_string)
+    cost_matrix = init_number_vec(len_hyp + 1, len_ref + 1)  # np.zeros((len_hyp + 1, len_ref + 1), dtype=np.int16)
+
+    # 0-equal；2-insertion；3-deletion；1-substitution
+    ops_matrix = init_number_vec(len_hyp + 1, len_ref + 1)  # np.zeros((len_hyp + 1, len_ref + 1), dtype=np.int8)
+
+    for i in range(len_hyp + 1):
+        cost_matrix[i][0] = i
+    for j in range(len_ref + 1):
+        cost_matrix[0][j] = j
+
+    id_ind = 0
+    for i in range(1, len_hyp + 1):
+        for j in range(1, len_ref + 1):
+            ideal_index = i * len_ref / len_hyp
+            if hypo_string[i - 1] == ref_string[j - 1]:
+                cost_matrix[i][j] = cost_matrix[i - 1][j - 1]
+            else:
+                substitution = cost_matrix[i - 1][j - 1] + 1
+                insertion = cost_matrix[i - 1][j] + 1
+                deletion = cost_matrix[i][j - 1] + 1
+
+                compare_val = [substitution, insertion, deletion]
+
+                if (substitution > insertion) and (insertion == deletion):
+                    min_val = insertion
+                    if ideal_index >= j:
+                        operation_idx = 2
+                    else:
+                        operation_idx = 3
+                else:
+                    min_val = min(compare_val)
+                    operation_idx = compare_val.index(min_val) + 1
+                cost_matrix[i][j] = min_val
+                ops_matrix[i][j] = operation_idx
+    return cost_matrix[len_hyp][len_ref]
 
 # The format of gramx.txt is <space-split ngram token> \t frequency
 # such as: 
@@ -398,7 +478,10 @@ def judge_insertion(path, insert_begin, insert_end):
 
 
 def cal_min_align(path):
+    # path: [([], 'a'), ('b', 'b'), ('b', 'c'), ('d', 'd'), ('e', []), ('f', 'f')]
     path_char_wer = 0
+    for i in path:
+        path_char_wer += cal_charwer_zh(i[0], i[1])
     char_wer = 0
     return_match = [[i[0], []] for i in path if i[0]]
 
@@ -437,8 +520,8 @@ def cal_min_align(path):
             # print(index_match, return_match, left_align, right_align)
             lm_score += new_lm_score
 
-    # for match_case in return_match:
-    #     char_wer += cal_charwer_zh(match_case[0], "".join(match_case[1]))
+    for match_case in return_match:
+        char_wer += cal_charwer_zh(match_case[0], "".join(match_case[1]))
 
     return path_char_wer, char_wer, lm_score, return_match
 
@@ -676,6 +759,9 @@ def calculate_wer_dur_v1(hypo_list, ref_list, return_path_only=False):
     path_num_matrix_back = init_number_vec(len_hyp + 1,
                                            len_ref + 1)  # np.zeros((len_hyp + 1, len_ref + 1), dtype=np.int16)
 
+    # 0-equal；2-insertion；3-deletion；1-substitution
+    # ops_matrix = np.zeros((len_hyp + 1, len_ref + 1), dtype=np.int8)
+
     cost_matrix[0][0] = 0
     path_num_matrix_for[0][0] = 1
 
@@ -873,7 +959,7 @@ def cal_token_char_num(sentence):
     char_num = len("".join(sentence))
     return token_num * 1000 + char_num
 
-@set_timeout(30, after_timeout)  # 30s limitation for align
+#@set_timeout(30, after_timeout)  # 30s limitation for align
 def align_encoder(hypo_sen, ref_sen):
 
     werdur, _ = calculate_wer_dur_v1(hypo_sen, ref_sen, return_path_only=False)
