@@ -14,8 +14,8 @@ import preprocess
 # outfile = sys.argv[2]
 # random.seed(int(sys.argv[3]))
 # np.random.seed(int(sys.argv[3]))
-random.seed(int(random.random()))
-np.random.seed(int(random.random()))
+random.seed(int(sys.argv[1]))
+np.random.seed(int(sys.argv[1]))
 # input_file_dir = r'C:\\Code\\NeuralSpeech\\FastCorrect\\'
 # input_file_names = r'std_sports.txt' #output of wiki_preprocess.py
 input_file_dir = '../extracted/AA/'
