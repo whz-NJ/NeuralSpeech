@@ -95,9 +95,10 @@ from g2pM import G2pM
 model = G2pM()
 g2pM_dict = {}
 tokens_count_dict = {}
-g2pM_dict['加'] = unify_pinyin(''.join(model('加', tone=False, char_split=True)))
+# @.:+-=/\'×~&_
+g2pM_dict['+'] = unify_pinyin(''.join(model('加', tone=False, char_split=True)))
 g2pM_dict['.'] = unify_pinyin(''.join(model('点', tone=False, char_split=True)))
-g2pM_dict['@'] = 'at'
+g2pM_dict['@'] = unify_pinyin(''.join(model('爱', tone=False, char_split=True)))
 g2pM_dict['×'] = unify_pinyin(''.join(model('乘', tone=False, char_split=True)))
 g2pM_dict['='] = unify_pinyin(''.join(model('等', tone=False, char_split=True)))
 g2pM_dict['度'] = unify_pinyin(''.join(model('度', tone=False, char_split=True)))
