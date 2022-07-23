@@ -163,7 +163,7 @@ begin_time = time.time()
 for input_file_name in input_file_names:
     input_file_path = input_file_dir + input_file_name
     with open(input_file_path, 'r', encoding='utf-8') as infile:
-        output_file_path = input_file_dir + "/noised_" + input_file_name
+        output_file_path = input_file_dir + "/noised" + sys.argv[1] + "_" + input_file_name
         with open(output_file_path, 'w', encoding='utf-8') as outfile:
             final_lines = []
             for count, line in enumerate(infile.readlines()):
@@ -197,7 +197,7 @@ for input_file_name in input_file_names:
                             if tokens[i] in sim_dict[tok][1].keys():
                                 tok = tokens[i]
                                 matched_tokens_num = sum([item.matched_tokens_num for item in matched_info])
-                                token_noise_ratio = matched_tokens_num / (matched_tokens_num + 1) #匹配的字符串越长，纠错项越容易被选到
+                                token_noise_ratio = matched_tokens_num / (matched_tokens_num + 4) #匹配的字符串越长，纠错项越容易被选到
                                 if token_noise_ratio > 0 and np.random.random() < token_noise_ratio:
                                 #if matched_tokens_num > 0:
                                     meta_noise = np.random.choice(all_op, p=prob_op)
