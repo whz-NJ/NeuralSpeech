@@ -33,10 +33,7 @@ def replace_func(input_file):
 
 
 def run():
-    for data_name in data_names:
-        replace_func(data_path + data_name)
-        print('{0} has been processed !'.format(data_name))
-    #添加强制纠错规则中的词表
+    # 用强制纠错规则中的词初始化词表
     correction_rule_files = [r'./scripts/force_correction_rules.txt',
                              r'./scripts/hard_force_correction_rules.txt']
     # correction_rule_files = [r'./force_correction_rules.txt',
@@ -59,7 +56,13 @@ def run():
                     count = preprocess.tokens_count_dict.get(token.lower(), 0)
                     if count >= MIN_RULE_TOKEN_COUNT:
                         continue
-                    preprocess.tokens_count_dict[token.lower()] = MIN_RULE_TOKEN_COUNT + count + 1 #强制纠错中的token一定要出现在词表中
+                    # 强制纠错中的token一定要出现在词表中
+                    preprocess.tokens_count_dict[token.lower()] = MIN_RULE_TOKEN_COUNT + count + 1
+
+    #处理各wiki文件
+    for data_name in data_names:
+        replace_func(data_path + data_name)
+        print('{0} has been processed !'.format(data_name))
 
     #保存词表
     MAX_TOKENS = 40000

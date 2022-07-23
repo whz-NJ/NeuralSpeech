@@ -80,14 +80,16 @@ for rule_file_path in force_correction_rule_files:
             sentences = preprocess.normAndTokenize(vocab, 1)
             sim_sentences = preprocess.normAndTokenize(sim_vocab, 1)
             if len(sentences) == 0 or len(sim_sentences) == 0:
-                print("skip: " + line)
+                print("skip empty src or tgt rule: " + line)
                 continue
             tokens = []
             for sentence in sentences:
-                tokens.extend(sentence.split())
+                for token in sentence.split():
+                    tokens.append(token.lower())
             sim_tokens = []
             for sentence in sim_sentences:
-                sim_tokens.extend(sentence.split())
+                for token in sentence.split():
+                    sim_tokens.append(token.lower())
             same_pairs = True
             if len(tokens) != len(sim_tokens):
                 same_pairs = False
@@ -97,7 +99,7 @@ for rule_file_path in force_correction_rule_files:
                         same_pairs = False
                         break
             if same_pairs:
-                print("skip: " + line)
+                print("skip same src tgt rule: " + line)
                 continue
             trie_dict.insert(tokens, sim_tokens)
 
