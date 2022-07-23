@@ -37,10 +37,10 @@ def my_an2cn(digitsStr):
     return cn2an.an2cn(digitsStr, 'low')
 
 seperatorMap = {}
-for ch in r'<>?~,，。！？;；()（）&[]【】{}、—_《》':
+for ch in r'<>?,，。！？;；()（）[]【】{}、《》「」—':
     seperatorMap[ch] = ch
 keepMap = {}
-for ch in r'@.:+-=/\'×':
+for ch in r'@.:+-=/\'×~&_':
     keepMap[ch] = ch
 
 char_digits_pattern = re.compile(r'^([0-9.]*)([a-zA-Z]+)([0-9.]*)([a-zA-Z]*)([0-9.]*)$')
@@ -107,6 +107,8 @@ g2pM_dict['比'] = unify_pinyin(''.join(model('比', tone=False, char_split=True
 g2pM_dict['/'] = unify_pinyin(''.join(model('分', tone=False, char_split=True))) #分之，讯飞ASR，不会把 / 符号当作除
 g2pM_dict['减'] = unify_pinyin(''.join(model('减', tone=False, char_split=True)))
 g2pM_dict['负'] = unify_pinyin(''.join(model('负', tone=False, char_split=True)))
+g2pM_dict['~'] = unify_pinyin(''.join(model('至', tone=False, char_split=True)))
+g2pM_dict['&'] = unify_pinyin(''.join(model('和', tone=False, char_split=True)))
 for digit in digitMap.keys():
     g2pM_dict[digit] = unify_pinyin(''.join(model(digitMap[digit], tone=False, char_split=True)))
 
@@ -117,10 +119,11 @@ def normAndTokenize(line, min_sentence_len=2, split_sentences=False):
     def append_english_digits():
         nonlocal tokens, english, digits
         if len(english) > 0:
-            tokens.append(english)
-            tokens_count_dict[english] = tokens_count_dict.get(english, 0) + 1
-            if not g2pM_dict.__contains__(english):
-                g2pM_dict[english] = english.lower() #拼音不区分大小写，但匹配时的输入需要区分
+            english_lower = english.lower()  # 为了减小大小写字母不统一，统一转换为小写
+            tokens.append(english_lower)
+            tokens_count_dict[english_lower] = tokens_count_dict.get(english_lower, 0) + 1
+            if not g2pM_dict.__contains__(english_lower):
+                g2pM_dict[english_lower] = english_lower
             english = ''
         # elif combine_digits: #数字组合，不能组合，否则训练预测时会出现OOV问题
         #     if len(digits) > 0:
@@ -180,10 +183,11 @@ def normAndTokenize(line, min_sentence_len=2, split_sentences=False):
             tokens = []
         elif '0' <= ch <= '9': #数字
             if len(english) > 0:
-                tokens.append(english)
-                tokens_count_dict[english] = tokens_count_dict.get(english, 0) + 1
-                if not g2pM_dict.__contains__(english):
-                    g2pM_dict[english] = english.lower() #拼音不区分大小写，但匹配时的输入需要区分
+                english_lower = english.lower()  # 为了减小大小写字母不统一，统一转换为小写
+                tokens.append(english_lower)
+                tokens_count_dict[english_lower] = tokens_count_dict.get(english_lower, 0) + 1
+                if not g2pM_dict.__contains__(english_lower):
+                    g2pM_dict[english_lower] = english_lower
                 english = ''
             digits += ch
         elif ch == '%':
@@ -192,7 +196,8 @@ def normAndTokenize(line, min_sentence_len=2, split_sentences=False):
                 tokens_count_dict['%'] = tokens_count_dict.get('%', 0) + 1
             append_english_digits() #先加百分号，再加数字
         elif keepMap.__contains__(ch): #需要保留的符号
-            if ch == '+' or ch == '=' or ch =='@' or ch == '×':
+            if ch == '+' or ch == '=' or ch =='@' or ch == '×'\
+                    or ch == '&' or ch == '~':
                 append_english_digits()
                 tokens.append(ch)
                 tokens_count_dict[ch] = tokens_count_dict.get(ch, 0) + 1
@@ -280,8 +285,9 @@ def normAndTokenize(line, min_sentence_len=2, split_sentences=False):
     return sentences
 
 def main():
-    print(normAndTokenize('3/Y', split_sentences=True))
-    print(normAndTokenize('3-3=100%+3=4×6=3.4 。3:3 13:46@30°aBC12', 2, True))
+    #print(normAndTokenize('3/Y', split_sentences=True))
+    print(normAndTokenize('ab&cd十五~十六13—14ba_cdef-gh', 2, True))
+    print(normAndTokenize('我们「救中国」啊',split_sentences=True))
     # print(normalize('3/Y'))
     # print(normalize('3@性'))
     # print(normalize('AI-7'))
