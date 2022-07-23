@@ -8,6 +8,7 @@ def replace_func(input_file):
     input_file_dir = os.path.dirname(input_file)
     input_file_name = os.path.basename(input_file)
     outfile = codecs.open(input_file_dir + '/std_' + input_file_name, 'w', 'utf-8')
+
     with codecs.open(input_file, 'r', 'utf-8') as myfile:
         sentences = []
         for line in myfile:
@@ -31,7 +32,16 @@ def run():
     for data_name in data_names:
         replace_func(data_path + data_name)
         print('{0} has been processed !'.format(data_name))
-
+    #记录词表
+    with codecs.open(data_path + '/dict.CN_char.txt', 'w', 'utf-8') as dictfile:
+        tokens = []
+        for token in preprocess.g2pM_dict.keys():
+            tokens.append(token+'\n')
+            if len(tokens) > 10000:
+                dictfile.writelines(tokens)
+                tokens = []
+        if len(tokens) > 0:
+            dictfile.writelines(tokens)
 
 if __name__ == '__main__':
     run()

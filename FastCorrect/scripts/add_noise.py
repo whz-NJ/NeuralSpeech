@@ -58,8 +58,8 @@ with open(r'C:\Code\NeuralSpeech\FastCorrect\scripts\chinese_char_sim.txt', 'r',
             continue
         sim_dict[first_char][vocab_length][vocab] = sim_vocab
 
-# force_correction_rule_files = [r'C:\Code\NeuralSpeech\FastCorrect\scripts\std_force_correction_rules.txt',
-#                                r'C:\Code\NeuralSpeech\FastCorrect\scripts\hard_force_correction_rules.txt']
+# force_correction_rule_files = [r'./scripts/std_force_correction_rules.txt',
+#                                r'./scripts/hard_force_correction_rules.txt']
 force_correction_rule_files = [r'C:\Code\NeuralSpeech\FastCorrect\scripts\std_test_rules.txt']
 for rule_file_path in force_correction_rule_files:
     with open(rule_file_path, 'r', encoding='utf-8') as infile:
@@ -91,7 +91,7 @@ for rule_file_path in force_correction_rule_files:
             trie_dict.insert(tokens, sim_tokens)
 
 noise_ratio = 0.15
-# noise_ratio = 1.1
+#noise_ratio = 1.1
 beam_size = 1
 
 char_candidate_logit = [6, 5, 5, 4, 4, 3, 3, 3, 2, 2, 2, 1, 1, 1, 1]
@@ -102,7 +102,6 @@ char_candidate_logit = [6, 5, 5, 4, 4, 3, 3, 3, 2, 2, 2, 1, 1, 1, 1]
 # np.random.seed(int(sys.argv[3]))
 infile = r'C:\Code\NeuralSpeech\FastCorrect\std_sports.txt' #output of wiki_preprocess.py
 outfile = r'C:\Code\NeuralSpeech\FastCorrect\noised_std_sports.txt'
-dictfile = r'C:\Code\NeuralSpeech\FastCorrect\dict.CN_char.txt'
 random.seed(7)
 np.random.seed(7)
 
@@ -178,7 +177,7 @@ with open(infile, 'r', encoding='utf-8') as infile:
                     matched_info = trie_dict.get_pairs(tokens[i:])
                     if tok not in sim_dict.keys(): #对应英文单词（数字、特殊符号或汉字可以在相似字表里找到）
                         meta_noise = np.random.choice(all_op, p=prob_op)
-                        meta_noise = SUB
+                        #meta_noise = SUB
                         if len(matched_info) > 0:
                             matched_tokens_num, sim_tokens = add_tokens_noise(tok, meta_noise, matched_info)
                             new_tokens.extend(sim_tokens)
@@ -192,9 +191,9 @@ with open(infile, 'r', encoding='utf-8') as infile:
                         if tokens[i] in sim_dict[tok][1].keys():
                             tok = tokens[i]
                             matched_tokens_num = sum([item.matched_tokens_num for item in matched_info])
-                            token_noise_ratio = matched_tokens_num / (matched_tokens_num + 2) #匹配的字符串越长，纠错项越容易被选到
+                            token_noise_ratio = matched_tokens_num / (matched_tokens_num + 1) #匹配的字符串越长，纠错项越容易被选到
                             if token_noise_ratio > 0 and np.random.random() < token_noise_ratio:
-                            # if matched_tokens_num > 0:
+                            #if matched_tokens_num > 0:
                                 meta_noise = np.random.choice(all_op, p=prob_op)
                                 # meta_noise = SUB
                                 matched_tokens_num, sim_tokens = add_tokens_noise(tok, meta_noise, (matched_info if random.random() < 0.99 else None))
@@ -203,7 +202,7 @@ with open(infile, 'r', encoding='utf-8') as infile:
                                 continue
                             i += 1
                             meta_noise = np.random.choice(all_op, p=prob_op)
-                            # meta_noise = SUB
+                            #meta_noise = SUB
                             meta_new_tokens = noise_meta_beam(tok, meta_noise, (sim_dict[tok[0]][1][tok] if random.random() < 0.99 else None))
                             new_tokens.extend(meta_new_tokens)
                             continue
@@ -223,13 +222,4 @@ with open(infile, 'r', encoding='utf-8') as infile:
         if len(final_lines) > 0: #整个文件处理完成
             outfile.writelines(final_lines)
             final_lines = []
-#记录词表
-with open(dictfile, 'w', encoding='utf-8') as dictfile:
-    tokens = []
-    for token in preprocess.g2pM_dict.keys():
-        tokens.append(token+'\n')
-        if len(tokens) > 10000:
-            dictfile.writelines(tokens)
-            tokens = []
-    if len(tokens) > 0:
-        dictfile.writelines(tokens)
+

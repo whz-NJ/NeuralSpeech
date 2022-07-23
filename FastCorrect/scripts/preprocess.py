@@ -77,160 +77,6 @@ def Q2B(uchar):
         return uchar
     return chr(inside_code)
 
-def normalize(line, min_sentence_len=2, to_lower_case=False):
-    result = []
-    sentence = ''
-
-    digits = ''
-    prev_ch = ''
-    english_word = False
-    line = line.strip()
-    if to_lower_case:
-        line = line.lower()
-    idx = 0
-    while idx < len(line):
-        ch = Q2B(line[idx])
-        if idx < (len(line)-1):
-            next_ch = Q2B(line[idx+1])
-            if ch == '°' and (next_ch == 'C' or next_ch == 'c'):
-                if len(digits) > 0:
-                    sentence += my_an2cn(digits)
-                    sentence += '摄氏度'
-                    digits = ''
-                prev_ch = ch
-                english_word = False
-                idx = idx + 1 # 跳过下一个字符
-                continue
-        else:
-            next_ch = ''
-
-        if seperatorMap.__contains__(ch): #句子分隔符
-            if len(digits) > 0:
-                sentence += my_an2cn(digits)
-                digits = ''
-            if len(sentence) >= min_sentence_len:
-                result.append(sentence)
-                sentence = ""
-            else:
-                sentence = "" # 跳过过短的句子
-            english_word = False
-        elif '0' <= ch and '9' >= ch: #数字
-            if english_word:
-                if len(digits) > 0:
-                    sentence += digits
-                    digits = ''
-                sentence += ch #英文单词中的数字
-            else:
-                digits += ch
-        elif ch == '%' and len(digits) > 0:
-            digits = '百分之' + my_an2cn(digits)
-            sentence += digits
-            digits = ''
-            english_word = False
-        elif keepMap.__contains__(ch): #需要保留的符号
-            if ch == '+' or ch == '=' or ch =='@' or ch == '×':
-                if (len(digits) > 0):
-                    sentence += my_an2cn(digits)
-                    digits = ''
-                if ch == '+':
-                    sentence += '加'
-                elif ch == '@':
-                    sentence += ' at '
-                elif ch == '×':
-                    sentence += '乘'
-                else:
-                    sentence += '等于'
-                english_word = False
-                prev_ch = ch
-                idx = idx + 1
-                continue
-            if '0' <= prev_ch <= '9' and ('0' <= next_ch <= '9'): #两边都是数字
-                english_word = False
-                if ch == '.':
-                    digits += '.' # 数字中的点
-                elif ch == ':':
-                    is_time = False
-                    if digits.find('.') == -1 and len(digits) == 2 and int(digits) < 24:
-                        if (idx < len(line) - 2):
-                            next_next_ch = Q2B(line[idx+2])
-                            if '0' <= next_next_ch <= '9':
-                                next_digit = int('' + next_ch + next_next_ch)
-                                if next_digit < 60:
-                                    #当前字符往后数的第3个字符不是数字
-                                    if (idx == len(line) - 3) or line[idx+3] < '0' or line[idx+3] > '9':
-                                        sentence += my_an2cn(digits) + '点'
-                                        digits = ''
-                                        is_time = True
-                    if not is_time:
-                        sentence += my_an2cn(digits) + '比'
-                        digits = ''
-                elif ch == '/':
-                    next_digits = extract_digits(line[idx+1:])
-                    sentence += my_an2cn(next_digits) + '分之' + my_an2cn(digits)
-                    idx += len(next_digits)
-                    digits = ''
-                elif ch == '-':
-                    sentence += my_an2cn(digits) + '减'
-                    digits = ''
-            elif '0' <= next_ch <= '9' and ch == '-':
-                if 'A' <= prev_ch <= 'Z' or 'a' <= prev_ch <= 'z':
-                    sentence += '减'
-                else:
-                    sentence += '负'
-                digits = ''
-            else: #不在2个数字中间的需保留符号
-                if ch == '.':
-                    if len(digits) > 0:
-                        sentence += my_an2cn(digits) #
-                        digits = ''
-                        sentence += '点'
-                        english_word = False
-                    elif english_word and (('A' <= next_ch <= 'Z') or ('a' <= next_ch <= 'z') or ('0' <= next_ch <= '9')):
-                        sentence += ch # 英文单词中的点
-                    elif not english_word:
-                        sentence += '点' #汉字中的点
-                elif english_word and (('A' <= next_ch <= 'Z') or ('a' <= next_ch <= 'z') or ('0' <= next_ch <= '9')) \
-                        and ch == '-' or ch == '/' or ch == '\'': # 英文单词中的特殊符号
-                    if len(digits) > 0:
-                        sentence += digits #英文前面的数字
-                        digits = ''
-                    sentence += ch #英文单词中的特殊符号
-                else: #不在两个数字或英文字母之间的特殊符号，作为句子分隔符
-                    if len(digits) > 0:
-                        sentence += my_an2cn(digits)
-                        digits = ''
-                    if len(sentence) >= min_sentence_len:
-                        result.append(sentence)
-                    sentence = ''
-                    english_word = False
-        elif ('\u4e00' <= ch <= '\u9fa5') or ('a' <= ch <= 'z') or ('A' <= ch <= 'Z'): #汉字或英文
-            if len(digits) > 0:
-                if ch == '年' and (len(digits) == 2 or len(digits) == 4) \
-                        and (digits.find('.') == -1 and (int(digits) <= 99 or 1000 <= int(digits) <= 2099)):
-                    sentence += str_to_digits(digits) #xxxx年时，不变成带数量单位
-                elif ('\u4e00' <= ch <= '\u9fa5'):
-                    sentence += my_an2cn(digits)
-                else:
-                    sentence += digits # 英文中的数字
-                digits = ''
-            sentence += ch
-            if ('\u4e00' <= ch <= '\u9fa5'): #汉字
-                english_word = False
-            else: #英文
-                english_word = True
-        elif ch == ' ' or ch == "\t":
-            if english_word:
-                sentence += ' ' #英文单词之间需要用空格分割
-                english_word = False
-        prev_ch = ch
-        idx = idx + 1
-    #一行扫描结束
-    if len(digits) > 0:
-        sentence += my_an2cn(digits)
-    if len(sentence) >= min_sentence_len:
-        result.append(sentence)
-    return result
-
 def unify_pinyin(pinyin):
     py = pinyin
     if len(pinyin) >= 2:
@@ -263,6 +109,7 @@ g2pM_dict['负'] = unify_pinyin(''.join(model('负', tone=False, char_split=True
 for digit in digitMap.keys():
     g2pM_dict[digit] = unify_pinyin(''.join(model(digitMap[digit], tone=False, char_split=True)))
 
+#拆成独立发音的 tokens
 def normAndTokenize(line, min_sentence_len=2, split_sentences=False):
     sentences = []
 
@@ -286,7 +133,7 @@ def normAndTokenize(line, min_sentence_len=2, split_sentences=False):
 
     def extract_digits(words):
         digits_count = 0
-        global tokens
+        nonlocal tokens
         for ch in words:
             if '0' <= ch <= '9' or ch == '.':
                 tokens.append(ch)
@@ -380,17 +227,19 @@ def normAndTokenize(line, min_sentence_len=2, split_sentences=False):
             else: #ch是需保留符号，两边都不是数字
                 if ch == '.':
                     append_english_digits()
-                    tokens.append(ch)
-                elif ch == '\'' and len(english) > 0 and (('A' <= next_ch <= 'Z') or ('a' <= next_ch <= 'z')): # 英文单词中的特殊符号
+                    if 'A' <= prev_ch <= 'Z' or 'a' <= prev_ch <= 'z' or 'A' <= next_ch <= 'Z' or 'a' <= next_ch <= 'z':
+                        tokens.append(ch)
+                elif ch == '\'' and len(english) > 0 and (('A' <= next_ch <= 'Z') or ('a' <= next_ch <= 'z')): # 英文单词中的'号
                     english += ch
-                else: #不在两个数字或英文字母之间的特殊符号，作为句子分隔符
+                elif ch == '/' and not ('\u4e00' <= prev_ch <= '\u9fa5') and not ('\u4e00' <= next_ch <= '\u9fa5'):
+                    append_english_digits()
+                    tokens.append(ch)
+                else: #不在两个数字或英文字母之间的特殊符号，作为词分隔符
+                    append_english_digits()
                     if not split_sentences:
                         prev_ch = ch
                         idx = idx + 1  # 丢弃，跳到下一个字符
                         continue
-                    if len(tokens) >= min_sentence_len:  # 分句且当前句子token数满足要求
-                        sentences.append(" ".join(tokens))
-                    tokens = []
         elif '\u4e00' <= ch <= '\u9fa5': #汉字
             append_english_digits()
             if not g2pM_dict.__contains__(ch):
@@ -412,32 +261,8 @@ def normAndTokenize(line, min_sentence_len=2, split_sentences=False):
         sentences.append(" ".join(tokens))
     return sentences
 
-#拆成独立发音的 tokens
-# 源可以是大小写不区分的，目标必须区分大小写
-def tokenize(sentence):
-    tokens = []
-    idx = 0
-    english_word = ''
-    while idx < len(sentence):
-        ch = sentence[idx]
-        if '\u4e00' <= ch <= '\u9fa5':
-            if len(english_word) > 0:
-                tokens.extend(split_english_digits(english_word))
-                english_word = ''
-            tokens.append(ch)
-        elif ('a' <= ch <= 'z') or ('A' <= ch <= 'Z') or ('0' <= ch <= '9') or keepMap.__contains__(ch):
-            english_word += ch
-        elif ' ' == ch or "\t" == ch:
-            if len(english_word) > 0:
-                tokens.extend(split_english_digits(english_word))
-                english_word = ''
-        idx = idx + 1
-    if len(english_word) > 0:
-        tokens.extend(split_english_digits(english_word))
-    return tokens
-
 def main():
-    print(normAndTokenize('你-3=100%+3=4×6=3.4 ,3:3 13:46@30°cabc12'))
+    print(normAndTokenize('3/Y', split_sentences=True))
     print(normAndTokenize('3-3=100%+3=4×6=3.4 。3:3 13:46@30°aBC12', 2, True))
     # print(normalize('3/Y'))
     # print(normalize('3@性'))
