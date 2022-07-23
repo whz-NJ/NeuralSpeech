@@ -37,8 +37,8 @@ def run():
         replace_func(data_path + data_name)
         print('{0} has been processed !'.format(data_name))
     #添加强制纠错规则中的词表
-    correction_rule_files = [r'./script/force_correction_rules.txt',
-                             r'./script/hard_force_correction_rules.txt']
+    correction_rule_files = [r'./scripts/force_correction_rules.txt',
+                             r'./scripts/hard_force_correction_rules.txt']
     # correction_rule_files = [r'./force_correction_rules.txt',
     #                          r'./hard_force_correction_rules.txt']
     MIN_RULE_TOKEN_COUNT = 10000;

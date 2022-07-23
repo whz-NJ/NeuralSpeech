@@ -286,7 +286,7 @@ def normAndTokenize(line, min_sentence_len=2, split_sentences=False):
 
 def main():
     #print(normAndTokenize('3/Y', split_sentences=True))
-    print(normAndTokenize('ab&cd十五~十六13—14ba_cdef-gh', 2, True))
+    print(normAndTokenize('A&cd十五~十六13—14bA_cdef-gh', 2, True))
     print(normAndTokenize('我们「救中国」啊',split_sentences=True))
     # print(normalize('3/Y'))
     # print(normalize('3@性'))
