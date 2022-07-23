@@ -25,10 +25,10 @@ def replace_func(input_file):
 
 
 def run():
-    # data_path = './extracted/AA/'
-    # data_names = ['zh_wiki_00', 'zh_wiki_01', 'zh_wiki_02']
-    data_path = '../'
-    data_names = ['sports.txt']
+    data_path = '../extracted/AA/'
+    data_names = ['zh_wiki_00', 'zh_wiki_01', 'zh_wiki_02']
+    # data_path = '../'
+    # data_names = ['sports.txt']
     for data_name in data_names:
         replace_func(data_path + data_name)
         print('{0} has been processed !'.format(data_name))

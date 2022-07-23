@@ -15,8 +15,8 @@ trie_dict = trie.Trie()
 vocab_1char = []
 vocab_2char = []
 
-#with open('./scripts/sim_prun_char.txt', 'r', encoding='utf-8') as infile:
-with open(r'C:\Code\NeuralSpeech\FastCorrect\scripts\sim_prun_char.txt', 'r', encoding='utf-8') as infile:
+with open('./scripts/sim_prun_char.txt', 'r', encoding='utf-8') as infile:
+#with open(r'C:\Code\NeuralSpeech\FastCorrect\scripts\sim_prun_char.txt', 'r', encoding='utf-8') as infile:
     for line in infile.readlines():
         line = line.strip()
         first_char = line[0]
@@ -38,8 +38,8 @@ with open(r'C:\Code\NeuralSpeech\FastCorrect\scripts\sim_prun_char.txt', 'r', en
             continue
         sim_dict[first_char][vocab_length][vocab] = sim_vocab
 
-#with open('./scripts/chinese_char_sim.txt', 'r', encoding='utf-8') as infile:
-with open(r'C:\Code\NeuralSpeech\FastCorrect\scripts\chinese_char_sim.txt', 'r', encoding='utf-8') as infile:
+with open('./scripts/chinese_char_sim.txt', 'r', encoding='utf-8') as infile:
+#with open(r'C:\Code\NeuralSpeech\FastCorrect\scripts\chinese_char_sim.txt', 'r', encoding='utf-8') as infile:
     for id, line in enumerate(infile.readlines()):
         line = line.strip()
         first_char = line[0]
@@ -58,9 +58,9 @@ with open(r'C:\Code\NeuralSpeech\FastCorrect\scripts\chinese_char_sim.txt', 'r',
             continue
         sim_dict[first_char][vocab_length][vocab] = sim_vocab
 
-# force_correction_rule_files = [r'./scripts/std_force_correction_rules.txt',
-#                                r'./scripts/hard_force_correction_rules.txt']
-force_correction_rule_files = [r'C:\Code\NeuralSpeech\FastCorrect\scripts\std_test_rules.txt']
+force_correction_rule_files = [r'./scripts/std_force_correction_rules.txt',
+                               r'./scripts/hard_force_correction_rules.txt']
+#force_correction_rule_files = [r'C:\Code\NeuralSpeech\FastCorrect\scripts\std_test_rules.txt']
 for rule_file_path in force_correction_rule_files:
     with open(rule_file_path, 'r', encoding='utf-8') as infile:
         for id, line in enumerate(infile.readlines()):
@@ -100,8 +100,12 @@ char_candidate_logit = [6, 5, 5, 4, 4, 3, 3, 3, 2, 2, 2, 1, 1, 1, 1]
 # outfile = sys.argv[2]
 # random.seed(int(sys.argv[3]))
 # np.random.seed(int(sys.argv[3]))
-infile = r'C:\Code\NeuralSpeech\FastCorrect\std_sports.txt' #output of wiki_preprocess.py
-outfile = r'C:\Code\NeuralSpeech\FastCorrect\noised_std_sports.txt'
+random.seed(random.random())
+np.random.seed(random.random())
+#infiles = [r'C:\Code\NeuralSpeech\FastCorrect\std_sports.txt'] #output of wiki_preprocess.py
+input_file_dir = '../extracted/AA/'
+input_file_names = [r'std_zh_wiki_00', r'std_zh_wiki_01', r'std_zh_wiki_02'] #output of wiki_preprocess.py
+
 random.seed(7)
 np.random.seed(7)
 
@@ -156,70 +160,72 @@ def noise_meta_beam(token, meta_noise, candidate):
 
 import time
 begin_time = time.time()
+for input_file_name in input_file_names:
+    input_file_path = input_file_dir + input_file_name
+    with open(input_file_path, 'r', encoding='utf-8') as infile:
+        output_file_path = input_file_dir + "/noised_" + input_file_name
+        with open(output_file_path, 'w', encoding='utf-8') as outfile:
+            final_lines = []
+            for count, line in enumerate(infile.readlines()):
+                if count % 5000 == 1:
+                    print("{} finished in {}s".format(count-1, time.time()-begin_time))
+                line = line.strip()
+                if not line:
+                    continue
+                new_tokens = []
+                tokens = line.split()
+                tokens_num = len(tokens)
+                i = 0
+                while i < tokens_num:
+                    tok = tokens[i]
 
-with open(infile, 'r', encoding='utf-8') as infile:
-    with open(outfile, 'w', encoding='utf-8') as outfile:
-        final_lines = []
-        for count, line in enumerate(infile.readlines()):
-            if count % 5000 == 1:
-                print("{} finished in {}s".format(count-1, time.time()-begin_time))
-            line = line.strip()
-            if not line:
-                continue
-            new_tokens = []
-            tokens = line.split()
-            tokens_num = len(tokens)
-            i = 0
-            while i < tokens_num:
-                tok = tokens[i]
-
-                if random.random() < noise_ratio:
-                    matched_info = trie_dict.get_pairs(tokens[i:])
-                    if tok not in sim_dict.keys(): #对应英文单词（数字、特殊符号或汉字可以在相似字表里找到）
-                        meta_noise = np.random.choice(all_op, p=prob_op)
-                        #meta_noise = SUB
-                        if len(matched_info) > 0:
-                            matched_tokens_num, sim_tokens = add_tokens_noise(tok, meta_noise, matched_info)
-                            new_tokens.extend(sim_tokens)
-                            i += matched_tokens_num
-                            continue
-                        meta_new_tokens = noise_meta_beam(tok, meta_noise, None)
-                        new_tokens.extend(meta_new_tokens)
-                        i += 1
-                        continue
-                    if tokens_num - i >= 1:
-                        if tokens[i] in sim_dict[tok][1].keys():
-                            tok = tokens[i]
-                            matched_tokens_num = sum([item.matched_tokens_num for item in matched_info])
-                            token_noise_ratio = matched_tokens_num / (matched_tokens_num + 1) #匹配的字符串越长，纠错项越容易被选到
-                            if token_noise_ratio > 0 and np.random.random() < token_noise_ratio:
-                            #if matched_tokens_num > 0:
-                                meta_noise = np.random.choice(all_op, p=prob_op)
-                                # meta_noise = SUB
-                                matched_tokens_num, sim_tokens = add_tokens_noise(tok, meta_noise, (matched_info if random.random() < 0.99 else None))
+                    if random.random() < noise_ratio:
+                        matched_info = trie_dict.get_pairs(tokens[i:])
+                        if tok not in sim_dict.keys(): #对应英文单词（数字、特殊符号或汉字可以在相似字表里找到）
+                            meta_noise = np.random.choice(all_op, p=prob_op)
+                            #meta_noise = SUB
+                            if len(matched_info) > 0:
+                                matched_tokens_num, sim_tokens = add_tokens_noise(tok, meta_noise, matched_info)
                                 new_tokens.extend(sim_tokens)
                                 i += matched_tokens_num
                                 continue
-                            i += 1
-                            meta_noise = np.random.choice(all_op, p=prob_op)
-                            #meta_noise = SUB
-                            meta_new_tokens = noise_meta_beam(tok, meta_noise, (sim_dict[tok[0]][1][tok] if random.random() < 0.99 else None))
+                            meta_new_tokens = noise_meta_beam(tok, meta_noise, None)
                             new_tokens.extend(meta_new_tokens)
+                            i += 1
                             continue
+                        if tokens_num - i >= 1:
+                            if tokens[i] in sim_dict[tok][1].keys():
+                                tok = tokens[i]
+                                matched_tokens_num = sum([item.matched_tokens_num for item in matched_info])
+                                token_noise_ratio = matched_tokens_num / (matched_tokens_num + 1) #匹配的字符串越长，纠错项越容易被选到
+                                if token_noise_ratio > 0 and np.random.random() < token_noise_ratio:
+                                #if matched_tokens_num > 0:
+                                    meta_noise = np.random.choice(all_op, p=prob_op)
+                                    # meta_noise = SUB
+                                    matched_tokens_num, sim_tokens = add_tokens_noise(tok, meta_noise, (matched_info if random.random() < 0.99 else None))
+                                    new_tokens.extend(sim_tokens)
+                                    i += matched_tokens_num
+                                    continue
+                                i += 1
+                                meta_noise = np.random.choice(all_op, p=prob_op)
+                                #meta_noise = SUB
+                                meta_new_tokens = noise_meta_beam(tok, meta_noise, (sim_dict[tok[0]][1][tok] if random.random() < 0.99 else None))
+                                new_tokens.extend(meta_new_tokens)
+                                continue
+                            else:
+                                pass
                         else:
-                            pass
-                    else:
-                        raise ValueError("Impossible condition!")
-                else: #不加噪声
-                    i += 1
-                    new_tokens.append(tok)
-            if len(new_tokens) > 0: # 一行处理完成
-                final_line = "\t".join([line] + [" ".join(new_tokens)]) + '\n'
-                final_lines.append(final_line)
-                if len(final_lines) > 10000:
-                    outfile.writelines(final_lines)
-                    final_lines = []
-        if len(final_lines) > 0: #整个文件处理完成
-            outfile.writelines(final_lines)
-            final_lines = []
+                            raise ValueError("Impossible condition!")
+                    else: #不加噪声
+                        i += 1
+                        new_tokens.append(tok)
+                if len(new_tokens) > 0: # 一行处理完成
+                    final_line = "\t".join([line] + [" ".join(new_tokens)]) + '\n'
+                    final_lines.append(final_line)
+                    if len(final_lines) > 10000:
+                        outfile.writelines(final_lines)
+                        final_lines = []
+            if len(final_lines) > 0: #整个文件处理完成
+                outfile.writelines(final_lines)
+                final_lines = []
 
