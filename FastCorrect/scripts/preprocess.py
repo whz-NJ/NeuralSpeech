@@ -94,6 +94,7 @@ def unify_pinyin(pinyin):
 from g2pM import G2pM
 model = G2pM()
 g2pM_dict = {}
+tokens_count_dict = {}
 g2pM_dict['加'] = unify_pinyin(''.join(model('加', tone=False, char_split=True)))
 g2pM_dict['.'] = unify_pinyin(''.join(model('点', tone=False, char_split=True)))
 g2pM_dict['@'] = 'at'
@@ -117,6 +118,7 @@ def normAndTokenize(line, min_sentence_len=2, split_sentences=False):
         nonlocal tokens, english, digits
         if len(english) > 0:
             tokens.append(english)
+            tokens_count_dict[english] = tokens_count_dict.get(english, 0) + 1
             if not g2pM_dict.__contains__(english):
                 g2pM_dict[english] = english.lower() #拼音不区分大小写，但匹配时的输入需要区分
             english = ''
@@ -129,6 +131,7 @@ def normAndTokenize(line, min_sentence_len=2, split_sentences=False):
         elif len(digits) > 0: #数字分开
             for digit in digits:
                 tokens.append(digit)
+                tokens_count_dict[digit] = tokens_count_dict.get(digit, 0) + 1
             digits = ''
 
     def extract_digits(words):
@@ -137,6 +140,7 @@ def normAndTokenize(line, min_sentence_len=2, split_sentences=False):
         for ch in words:
             if '0' <= ch <= '9' or ch == '.':
                 tokens.append(ch)
+                tokens_count_dict[ch] = tokens_count_dict.get(ch, 0) + 1
                 digits_count += 1
             else:
                 break
@@ -159,6 +163,7 @@ def normAndTokenize(line, min_sentence_len=2, split_sentences=False):
                     idx += 1
                 append_english_digits()
                 tokens.append('度')
+                tokens_count_dict['度'] = tokens_count_dict.get('度', 0) + 1
                 prev_ch = ''
                 continue
         else:
@@ -176,6 +181,7 @@ def normAndTokenize(line, min_sentence_len=2, split_sentences=False):
         elif '0' <= ch <= '9': #数字
             if len(english) > 0:
                 tokens.append(english)
+                tokens_count_dict[english] = tokens_count_dict.get(english, 0) + 1
                 if not g2pM_dict.__contains__(english):
                     g2pM_dict[english] = english.lower() #拼音不区分大小写，但匹配时的输入需要区分
                 english = ''
@@ -183,11 +189,13 @@ def normAndTokenize(line, min_sentence_len=2, split_sentences=False):
         elif ch == '%':
             if '0' <= prev_ch <= '9': #百分号跟在数字后
                 tokens.append('%') #先加百分号，再加数字
+                tokens_count_dict['%'] = tokens_count_dict.get('%', 0) + 1
             append_english_digits() #先加百分号，再加数字
         elif keepMap.__contains__(ch): #需要保留的符号
             if ch == '+' or ch == '=' or ch =='@' or ch == '×':
                 append_english_digits()
                 tokens.append(ch)
+                tokens_count_dict[ch] = tokens_count_dict.get(ch, 0) + 1
                 prev_ch = ch
                 idx = idx + 1
                 continue
@@ -206,34 +214,42 @@ def normAndTokenize(line, min_sentence_len=2, split_sentences=False):
                                     if (idx == len(line) - 3) or line[idx+3] < '0' or line[idx+3] > '9':
                                         append_english_digits()
                                         tokens.append('点')
+                                        tokens_count_dict['点'] = tokens_count_dict.get('点', 0) + 1
                                         is_time = True
                     if not is_time:
                         append_english_digits()
                         tokens.append('比')
+                        tokens_count_dict['比'] = tokens_count_dict.get('比', 0) + 1
                 elif ch == '/':
                         digits_count = extract_digits(line[idx+1:]) #先取后面数字
                         tokens.append(ch) # 再取 /
+                        tokens_count_dict[ch] = tokens_count_dict.get(ch, 0) + 1
                         append_english_digits() # 再取前面的数字
                         idx += digits_count
                 elif ch == '-':
                     append_english_digits()
                     tokens.append('减')
+                    tokens_count_dict['减'] = tokens_count_dict.get('减', 0) + 1
             elif '0' <= next_ch <= '9' and ch == '-': #ch是需保留符号，右边是数字，左边不是数字
                 if 'A' <= prev_ch <= 'Z' or 'a' <= prev_ch <= 'z':
                     tokens.append('减')
+                    tokens_count_dict['减'] = tokens_count_dict.get('减', 0) + 1
                 else:
                     tokens.append('负')
+                    tokens_count_dict['负'] = tokens_count_dict.get('负', 0) + 1
                 english = ''
             else: #ch是需保留符号，两边都不是数字
                 if ch == '.':
                     append_english_digits()
                     if 'A' <= prev_ch <= 'Z' or 'a' <= prev_ch <= 'z' or 'A' <= next_ch <= 'Z' or 'a' <= next_ch <= 'z':
                         tokens.append(ch)
+                        tokens_count_dict[ch] = tokens_count_dict.get(ch, 0) + 1
                 elif ch == '\'' and len(english) > 0 and (('A' <= next_ch <= 'Z') or ('a' <= next_ch <= 'z')): # 英文单词中的'号
                     english += ch
                 elif ch == '/' and not ('\u4e00' <= prev_ch <= '\u9fa5') and not ('\u4e00' <= next_ch <= '\u9fa5'):
                     append_english_digits()
                     tokens.append(ch)
+                    tokens_count_dict[ch] = tokens_count_dict.get(ch, 0) + 1
                 else: #不在两个数字或英文字母之间的特殊符号，作为词分隔符
                     append_english_digits()
                     if not split_sentences:
@@ -245,10 +261,12 @@ def normAndTokenize(line, min_sentence_len=2, split_sentences=False):
             if not g2pM_dict.__contains__(ch):
                 g2pM_dict[ch] = unify_pinyin(model(ch, tone=False, char_split=True)[0])
             tokens.append(ch)
+            tokens_count_dict[ch] = tokens_count_dict.get(ch, 0) + 1
         elif ('a' <= ch <= 'z') or ('A' <= ch <= 'Z'): #英文
             if len(digits) > 0:
                 for digit in digits:
                     tokens.append(digit)
+                    tokens_count_dict[digit] = tokens_count_dict.get(digit, 0) + 1
                 digits = ''
             english += ch
         elif ch == ' ' or ch == "\t":

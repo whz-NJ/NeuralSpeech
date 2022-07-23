@@ -10,6 +10,17 @@ import numpy as np
 import trie
 import preprocess
 
+# infile = sys.argv[1]
+# outfile = sys.argv[2]
+# random.seed(int(sys.argv[3]))
+# np.random.seed(int(sys.argv[3]))
+random.seed(int(random.random()))
+np.random.seed(int(random.random()))
+# input_file_dir = r'C:\\Code\\NeuralSpeech\\FastCorrect\\'
+# input_file_names = r'std_sports.txt' #output of wiki_preprocess.py
+input_file_dir = '../extracted/AA/'
+input_file_names = [r'std_zh_wiki_00', r'std_zh_wiki_01', r'std_zh_wiki_02'] #output of wiki_preprocess.py
+
 sim_dict = {}
 trie_dict = trie.Trie()
 vocab_1char = []
@@ -95,19 +106,6 @@ noise_ratio = 0.15
 beam_size = 1
 
 char_candidate_logit = [6, 5, 5, 4, 4, 3, 3, 3, 2, 2, 2, 1, 1, 1, 1]
-
-# infile = sys.argv[1]
-# outfile = sys.argv[2]
-# random.seed(int(sys.argv[3]))
-# np.random.seed(int(sys.argv[3]))
-random.seed(random.random())
-np.random.seed(random.random())
-#infiles = [r'C:\Code\NeuralSpeech\FastCorrect\std_sports.txt'] #output of wiki_preprocess.py
-input_file_dir = '../extracted/AA/'
-input_file_names = [r'std_zh_wiki_00', r'std_zh_wiki_01', r'std_zh_wiki_02'] #output of wiki_preprocess.py
-
-random.seed(7)
-np.random.seed(7)
 
 SUB = 0
 INS_L = 1
