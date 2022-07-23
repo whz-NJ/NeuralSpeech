@@ -169,7 +169,7 @@ for input_file_name in input_file_names:
             for count, line in enumerate(infile.readlines()):
                 if count % 5000 == 1:
                     print("{} finished in {}s".format(count-1, time.time()-begin_time))
-                line = line.strip()
+                line = line.strip().lower() #不考虑英文大小写
                 if not line:
                     continue
                 new_tokens = []
