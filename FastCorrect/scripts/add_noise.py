@@ -58,29 +58,51 @@ with open(r'C:\Code\NeuralSpeech\FastCorrect\scripts\chinese_char_sim.txt', 'r',
             continue
         sim_dict[first_char][vocab_length][vocab] = sim_vocab
 
-with open(r'C:\Code\NeuralSpeech\FastCorrect\scripts\sim_prun_word.txt', 'r', encoding='utf-8') as infile:
-    for id, line in enumerate(infile.readlines()):
-        line = line.strip()
-        vocab, sim_vocab = line.split('\t')
-        words = preprocess.normalize(vocab)
-        sim_words = preprocess.normalize(sim_vocab)
-        if len(words) != 1 or len(sim_words) != 1:
-            print("skip: " + line)
-            continue
-        trie_dict.insert(preprocess.tokenize(words[0]), preprocess.tokenize(sim_words[0]))
+# force_correction_rule_files = [r'C:\Code\NeuralSpeech\FastCorrect\scripts\std_force_correction_rules.txt',
+#                                r'C:\Code\NeuralSpeech\FastCorrect\scripts\hard_force_correction_rules.txt']
+force_correction_rule_files = [r'C:\Code\NeuralSpeech\FastCorrect\scripts\std_test_rules.txt']
+for rule_file_path in force_correction_rule_files:
+    with open(rule_file_path, 'r', encoding='utf-8') as infile:
+        for id, line in enumerate(infile.readlines()):
+            line = line.strip()
+            vocab, sim_vocab = line.split('\t')
+            sentences = preprocess.normAndTokenize(vocab, 1)
+            sim_sentences = preprocess.normAndTokenize(sim_vocab, 1)
+            if len(sentences) == 0 or len(sim_sentences) == 0:
+                print("skip: " + line)
+                continue
+            tokens = []
+            for sentence in sentences:
+                tokens.extend(sentence.split())
+            sim_tokens = []
+            for sentence in sim_sentences:
+                sim_tokens.extend(sentence.split())
+            same_pairs = True
+            if len(tokens) != len(sim_tokens):
+                same_pairs = False
+            else:
+                for token, sim_token in zip(tokens, sim_tokens):
+                    if token != sim_token:
+                        same_pairs = False
+                        break
+            if same_pairs:
+                print("skip: " + line)
+                continue
+            trie_dict.insert(tokens, sim_tokens)
 
 noise_ratio = 0.15
-#noise_ratio = 1.1
+# noise_ratio = 1.1
 beam_size = 1
 
-candidate_logit = [6, 5, 5, 4, 4, 3, 3, 3, 2, 2, 2, 1, 1, 1, 1]
+char_candidate_logit = [6, 5, 5, 4, 4, 3, 3, 3, 2, 2, 2, 1, 1, 1, 1]
 
 # infile = sys.argv[1]
 # outfile = sys.argv[2]
 # random.seed(int(sys.argv[3]))
 # np.random.seed(int(sys.argv[3]))
-infile = r'C:\Code\NeuralSpeech\FastCorrect\label.txt'
-outfile = r'C:\Code\NeuralSpeech\FastCorrect\noised_label_7.txt'
+infile = r'C:\Code\NeuralSpeech\FastCorrect\std_sports.txt' #output of wiki_preprocess.py
+outfile = r'C:\Code\NeuralSpeech\FastCorrect\noised_std_sports.txt'
+dictfile = r'C:\Code\NeuralSpeech\FastCorrect\dict.CN_char.txt'
 random.seed(7)
 np.random.seed(7)
 
@@ -95,18 +117,18 @@ def add_char_noise(token, op, candidate, unuse=None):
     if op == SUB:
         if candidate is None:
             random_token = np.random.choice(vocab_1char)
-            return random_token, None
+            return [random_token]
         else:
-            prob_candidate = [i/sum(candidate_logit[:len(candidate)]) for i in candidate_logit[:len(candidate)]]
-            return np.random.choice(candidate, p=prob_candidate), None
+            prob_candidate = [i / sum(char_candidate_logit[:len(candidate)]) for i in char_candidate_logit[:len(candidate)]]
+            return [np.random.choice(candidate, p=prob_candidate)]
     elif op == DEL:
-        return "", None
+        return []
     elif op == INS_L:
         random_token = np.random.choice(vocab_1char)
-        return random_token + token, random_token
+        return [random_token, token]
     elif op == INS_R:
         random_token = np.random.choice(vocab_1char)
-        return token + random_token, random_token
+        return [token, random_token]
     else:
         raise ValueError("impossible op {}!".format(op))
 
@@ -114,25 +136,21 @@ def add_tokens_noise(token, op, candidate, unuse=None):
     if op == SUB:
         if candidate is None:
             random_token = np.random.choice(vocab_1char)
-            return 1, 1, random_token, None
+            return 1, [random_token]
         else:
-            candidate_len = len(candidate)
-            if candidate_len > len(candidate_logit):
-                candidate_len = len(candidate_logit)
-            prob_candidate = [i/sum(candidate_logit[:candidate_len]) for i in candidate_logit[:candidate_len]]
-            matched_info = np.random.choice(candidate, p=prob_candidate)
-            return matched_info.matched_tokens_num, matched_info.matched_chars_num, matched_info.sim_words, None
-
+            matched_info = np.random.choice(candidate)
+            return matched_info.matched_tokens_num, matched_info.sim_words
     elif op == DEL:
-        return 1, 1, "", None
+        return 1, []
     elif op == INS_L:
         random_token = np.random.choice(vocab_1char)
-        return 1, 1, random_token + token, random_token
+        return 1, [random_token, token]
     elif op == INS_R:
         random_token = np.random.choice(vocab_1char)
-        return 1, 1, token + random_token, random_token
+        return 1, [token, random_token]
     else:
         raise ValueError("impossible op {}!".format(op))
+
 def noise_meta_beam(token, meta_noise, candidate):
     return add_char_noise(token, meta_noise, candidate, None)
 
@@ -142,66 +160,76 @@ begin_time = time.time()
 
 with open(infile, 'r', encoding='utf-8') as infile:
     with open(outfile, 'w', encoding='utf-8') as outfile:
+        final_lines = []
         for count, line in enumerate(infile.readlines()):
             if count % 5000 == 1:
                 print("{} finished in {}s".format(count-1, time.time()-begin_time))
             line = line.strip()
             if not line:
                 continue
-            new_lines = ["" for _ in range(beam_size)]
-            tokens = preprocess.tokenize(line)
+            new_tokens = []
+            tokens = line.split()
             tokens_num = len(tokens)
             i = 0
             while i < tokens_num:
                 tok = tokens[i]
-                if tok == " ":
-                    i += 1
-                    for j in range(beam_size):
-                        new_lines[j] += tok
-                    continue
 
                 if random.random() < noise_ratio:
                     matched_info = trie_dict.get_pairs(tokens[i:])
-                    if len(matched_info) > 0:
+                    if tok not in sim_dict.keys(): #对应英文单词（数字、特殊符号或汉字可以在相似字表里找到）
                         meta_noise = np.random.choice(all_op, p=prob_op)
-                        #meta_noise = SUB
-                        matched_tokens_num, matched_chars_num, sim_word, meta_ins = add_tokens_noise(tok, meta_noise, matched_info)
-                        new_lines[modify_beam] += ''.join(sim_word)
-                        i += matched_chars_num
-                        continue
-                    if tok not in sim_dict.keys():
-                        modify_beam = 0
-                        meta_noise = np.random.choice(all_op, p=prob_op)
-                        meta_new_token, meta_ins = noise_meta_beam(tok, meta_noise, None)
-                        new_lines[modify_beam] += meta_new_token
+                        meta_noise = SUB
+                        if len(matched_info) > 0:
+                            matched_tokens_num, sim_tokens = add_tokens_noise(tok, meta_noise, matched_info)
+                            new_tokens.extend(sim_tokens)
+                            i += matched_tokens_num
+                            continue
+                        meta_new_tokens = noise_meta_beam(tok, meta_noise, None)
+                        new_tokens.extend(meta_new_tokens)
+                        i += 1
                         continue
                     if tokens_num - i >= 1:
                         if tokens[i] in sim_dict[tok][1].keys():
                             tok = tokens[i]
+                            matched_tokens_num = sum([item.matched_tokens_num for item in matched_info])
+                            token_noise_ratio = matched_tokens_num / (matched_tokens_num + 2) #匹配的字符串越长，纠错项越容易被选到
+                            if token_noise_ratio > 0 and np.random.random() < token_noise_ratio:
+                            # if matched_tokens_num > 0:
+                                meta_noise = np.random.choice(all_op, p=prob_op)
+                                # meta_noise = SUB
+                                matched_tokens_num, sim_tokens = add_tokens_noise(tok, meta_noise, (matched_info if random.random() < 0.99 else None))
+                                new_tokens.extend(sim_tokens)
+                                i += matched_tokens_num
+                                continue
                             i += 1
-                            modify_beam = 0
                             meta_noise = np.random.choice(all_op, p=prob_op)
-                            meta_new_token, meta_ins = noise_meta_beam(tok, meta_noise, (sim_dict[tok[0]][1][tok] if random.random() < 0.99 else None))
-                            new_lines[modify_beam] += meta_new_token
+                            # meta_noise = SUB
+                            meta_new_tokens = noise_meta_beam(tok, meta_noise, (sim_dict[tok[0]][1][tok] if random.random() < 0.99 else None))
+                            new_tokens.extend(meta_new_tokens)
                             continue
                         else:
                             pass
                     else:
                         raise ValueError("Impossible condition!")
-                else:
+                else: #不加噪声
                     i += 1
-                    for j in range(beam_size):
-                        new_lines[j] += tok
-
-            need_skip = False
-            for iter_line in new_lines:
-                if not iter_line.strip():
-                    need_skip = True
-                    break
-            if need_skip:
-                continue
-
-            final_line = "\t".join([line] + new_lines)
-            outfile.write(final_line + '\n')
-
-
+                    new_tokens.append(tok)
+            if len(new_tokens) > 0: # 一行处理完成
+                final_line = "\t".join([line] + [" ".join(new_tokens)]) + '\n'
+                final_lines.append(final_line)
+                if len(final_lines) > 10000:
+                    outfile.writelines(final_lines)
+                    final_lines = []
+        if len(final_lines) > 0: #整个文件处理完成
+            outfile.writelines(final_lines)
+            final_lines = []
+#记录词表
+with open(dictfile, 'w', encoding='utf-8') as dictfile:
+    tokens = []
+    for token in preprocess.g2pM_dict.keys():
+        tokens.append(token+'\n')
+        if len(tokens) > 10000:
+            dictfile.writelines(tokens)
+            tokens = []
+    if len(tokens) > 0:
+        dictfile.writelines(tokens)

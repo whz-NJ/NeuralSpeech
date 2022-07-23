@@ -1,0 +1,8 @@
+棒球手	棒酒瘦
+职业	执业
+BBS	BBC
+BBS	BBX
+BBS	BS
+ICP	IP
+ICP	CP
+ICP	ISP

@@ -49,7 +49,7 @@ model = G2pM()
 hypo_file = r'C:\Code\NeuralSpeech\FastCorrect\hypo7.txt' #output of gen_hypo_ref_file.py
 ref_file = r'C:\Code\NeuralSpeech\FastCorrect\ref7.txt' #output of gen_hypo_ref_file.py
 
-g2pM_dict = {}
+g2pM_dict = preprocess.g2pM_dict
 all_hypo_line = []
 all_ref_line = []
 print("Loading: ", hypo_file)
@@ -63,8 +63,10 @@ with open(hypo_file, 'r', encoding='utf-8') as infile:
             if len(token) == 1:
                 if '\u4e00' <= token[0] <= '\u9fa5': #汉字
                     g2pM_dict[token] = preprocess.unify_pinyin(model(token, tone=False, char_split=True)[0])
-                else:
+                elif 'a' < token[0] <= 'z' or 'A' <= token[0] <= 'Z':
                     g2pM_dict[token] = token[0].lower()
+                else:
+                    raise ValueError("impossible token {}!".format(token))
             else: #英文单词
                 g2pM_dict[token] = token.lower()
 
@@ -979,13 +981,15 @@ def align_encoder(hypo_sen, ref_sen):
 
 
 
-
+##计算对齐效果 富尔基耶	-2这副耳机
 import time
 start_time = time.time()
 count = 0
 count_no_skip = 0
 with open(ref_file + '.tgt', 'w', encoding='utf-8') as outfile_tgt:
     with open(hypo_file + '.src.werdur.full', 'w', encoding='utf-8') as outfile_full:
+        outfile_full_lines = []
+        outfile_tgt_lines = []
         for hypo_list, ref_list in zip(all_hypo_line, all_ref_line):
             skip_this = False
             if not hypo_list:
@@ -997,14 +1001,20 @@ with open(ref_file + '.tgt', 'w', encoding='utf-8') as outfile_tgt:
                 if results:
                     count_no_skip += 1
                     output_src_str, output_tgt_str = results
-                    outfile_full.write(output_src_str + "\n")
-                    outfile_tgt.write(output_tgt_str + "\n")
-
+                    outfile_full_lines.append(output_src_str + "\n")
+                    outfile_tgt_lines.append(output_tgt_str + "\n")
+                    if len(outfile_tgt_lines) > 10000:
+                        outfile_full.writelines(outfile_full_lines)
+                        outfile_tgt.writelines(outfile_tgt_lines)
+                        outfile_full_lines = []
+                        outfile_tgt_lines =[]
             count += 1
 
             if count % 10000 == 0:
                 print(count, "in", time.time() - start_time, "s")
                 print(count_no_skip, "not skipped!")
-
+        if len(outfile_tgt_lines) > 0:
+            outfile_full.writelines(outfile_full_lines)
+            outfile_tgt.writelines(outfile_tgt_lines)
 print("Overall: {}/{} finished successful!".format(count_no_skip, count))
 

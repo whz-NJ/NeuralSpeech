@@ -13,7 +13,10 @@ def replace_func(input_file):
         for line in myfile:
             if r'<doc ' in line or r'</doc>' in line or r'<doc>' in line:
                 continue
-            sentences.extend([sentence + '\n' for sentence in preprocess.normalize(line)])
+            sentences.extend([sentence + '\n' for sentence in preprocess.normAndTokenize(line, split_sentences=True)])
+            if len(sentences) >= 10000:
+                outfile.writelines(sentences)
+                sentences = []
         #文件扫描结束
         if len(sentences) > 0:
             outfile.writelines(sentences)
