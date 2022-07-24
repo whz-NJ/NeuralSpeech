@@ -13,9 +13,15 @@ import sys
 import numpy as np
 import copy
 import random
-
 import signal
 import time
+
+input_file_dir = '../extracted/AA/'
+random_seed = sys.argv[1]
+
+#output of gen_hypo_ref_file.py
+hypo_input_file_names =[f'hypo_noised{random_seed}_std_zh_wiki_00', f'hypo_noised{random_seed}_std_zh_wiki_01', f'hypo_noised{random_seed}_std_zh_wiki_02']
+ref_input_file_names =[f'ref_noised{random_seed}_std_zh_wiki_00', f'ref_noised{random_seed}_std_zh_wiki_01', f'ref_noised{random_seed}_std_zh_wiki_02']
 
 def set_timeout(num, callback):
     def wrap(func):
@@ -44,47 +50,8 @@ def after_timeout():
 import preprocess
 from g2pM import G2pM
 model = G2pM()
-# hypo_file = sys.argv[1] #output of gen_hypo_ref_file.py
-# ref_file = sys.argv[2] #output of gen_hypo_ref_file.py
-hypo_file = r'C:\Code\NeuralSpeech\FastCorrect\hypo7.txt' #output of gen_hypo_ref_file.py
-ref_file = r'C:\Code\NeuralSpeech\FastCorrect\ref7.txt' #output of gen_hypo_ref_file.py
 
 g2pM_dict = preprocess.g2pM_dict
-all_hypo_line = []
-all_ref_line = []
-print("Loading: ", hypo_file)
-with open(hypo_file, 'r', encoding='utf-8') as infile:
-    for line in infile.readlines():
-        tokens = line.strip().split()
-        all_hypo_line.append(tokens)
-        for token in tokens:
-            if token in g2pM_dict.keys():
-                continue
-            if len(token) == 1:
-                if '\u4e00' <= token[0] <= '\u9fa5': #汉字
-                    g2pM_dict[token] = preprocess.unify_pinyin(model(token, tone=False, char_split=True)[0])
-                elif 'a' < token[0] <= 'z' or 'A' <= token[0] <= 'Z':
-                    g2pM_dict[token] = token[0].lower()
-                else:
-                    raise ValueError("impossible token {}!".format(token))
-            else: #英文单词
-                g2pM_dict[token] = token.lower()
-
-print("Loading: ", ref_file)
-with open(ref_file, 'r', encoding='utf-8') as infile:
-    for line in infile.readlines():
-        tokens = line.strip().split()
-        all_ref_line.append(tokens)
-        for token in tokens:
-            if token in g2pM_dict.keys():
-                continue
-            if len(token) == 1:
-                if '\u4e00' <= token[0] <= '\u9fa5': #汉字
-                    g2pM_dict[token] = preprocess.unify_pinyin(model(token, tone=False, char_split=True)[0])
-                else:
-                    g2pM_dict[token] = token[0].lower()
-            else: #英文单词
-                g2pM_dict[token] = token.lower()
 
 def init_number_vec(len_hyp, len_ref):
     return_vec = []
@@ -961,7 +928,7 @@ def cal_token_char_num(sentence):
     char_num = len("".join(sentence))
     return token_num * 1000 + char_num
 
-#@set_timeout(30, after_timeout)  # 30s limitation for align
+@set_timeout(30, after_timeout)  # 30s limitation for align
 def align_encoder(hypo_sen, ref_sen):
 
     werdur, _ = calculate_wer_dur_v1(hypo_sen, ref_sen, return_path_only=False)
@@ -980,41 +947,79 @@ def align_encoder(hypo_sen, ref_sen):
 
 
 
+for hypo_file_name, ref_file_name in zip(hypo_input_file_names, ref_input_file_names):
+    hypo_file_path = input_file_dir + hypo_file_name
+    ref_file_path = input_file_dir + ref_file_name
 
-##计算对齐效果 富尔基耶	-2这副耳机
-import time
-start_time = time.time()
-count = 0
-count_no_skip = 0
-with open(ref_file + '.tgt', 'w', encoding='utf-8') as outfile_tgt:
-    with open(hypo_file + '.src.werdur.full', 'w', encoding='utf-8') as outfile_full:
-        outfile_full_lines = []
-        outfile_tgt_lines = []
-        for hypo_list, ref_list in zip(all_hypo_line, all_ref_line):
-            skip_this = False
-            if not hypo_list:
-                skip_this = True
-            if not ref_list:
-                skip_this = True
-            if not skip_this:
-                results = align_encoder(hypo_list, ref_list)
-                if results:
-                    count_no_skip += 1
-                    output_src_str, output_tgt_str = results
-                    outfile_full_lines.append(output_src_str + "\n")
-                    outfile_tgt_lines.append(output_tgt_str + "\n")
-                    if len(outfile_tgt_lines) > 10000:
-                        outfile_full.writelines(outfile_full_lines)
-                        outfile_tgt.writelines(outfile_tgt_lines)
-                        outfile_full_lines = []
-                        outfile_tgt_lines =[]
-            count += 1
+    all_hypo_line = []
+    all_ref_line = []
+    print(f"Loading: {hypo_file_path} ...")
+    with open(hypo_file_path, 'r', encoding='utf-8') as infile:
+        for line in infile.readlines():
+            tokens = line.strip().split()
+            all_hypo_line.append(tokens)
+            for token in tokens:
+                if token in g2pM_dict.keys():
+                    continue
+                if len(token) == 1:
+                    if '\u4e00' <= token[0] <= '\u9fa5':  # 汉字
+                        g2pM_dict[token] = preprocess.unify_pinyin(model(token, tone=False, char_split=True)[0])
+                    elif 'a' < token[0] <= 'z' or 'A' <= token[0] <= 'Z':
+                        g2pM_dict[token.lower()] = token[0].lower()  # 不考虑大小写
+                    else:
+                        raise ValueError("impossible token {}!".format(token))
+                else:  # 英文单词
+                    g2pM_dict[token.lower()] = token.lower()  # 不考虑大小写
 
-            if count % 10000 == 0:
-                print(count, "in", time.time() - start_time, "s")
-                print(count_no_skip, "not skipped!")
-        if len(outfile_tgt_lines) > 0:
-            outfile_full.writelines(outfile_full_lines)
-            outfile_tgt.writelines(outfile_tgt_lines)
-print("Overall: {}/{} finished successful!".format(count_no_skip, count))
+    print(f"Loading: {ref_file_path} ...")
+    with open(ref_file_path, 'r', encoding='utf-8') as infile:
+        for line in infile.readlines():
+            tokens = line.strip().split()
+            all_ref_line.append(tokens)
+            for token in tokens:
+                if token in g2pM_dict.keys():
+                    continue
+                if len(token) == 1:
+                    if '\u4e00' <= token[0] <= '\u9fa5':  # 汉字
+                        g2pM_dict[token] = preprocess.unify_pinyin(model(token, tone=False, char_split=True)[0])
+                    else:
+                        g2pM_dict[token.lower()] = token[0].lower()
+                else:  # 英文单词
+                    g2pM_dict[token.lower()] = token.lower()
+
+    ##计算对齐效果 富尔基耶	-2这副耳机
+    start_time = time.time()
+    count = 0
+    count_no_skip = 0
+    with open(ref_file_path + '.tgt', 'w', encoding='utf-8') as outfile_tgt:
+        with open(hypo_file_path + '.src.werdur.full', 'w', encoding='utf-8') as outfile_full:
+            outfile_full_lines = []
+            outfile_tgt_lines = []
+            for hypo_list, ref_list in zip(all_hypo_line, all_ref_line):
+                skip_this = False
+                if not hypo_list:
+                    skip_this = True
+                if not ref_list:
+                    skip_this = True
+                if not skip_this:
+                    results = align_encoder(hypo_list, ref_list)
+                    if results:
+                        count_no_skip += 1
+                        output_src_str, output_tgt_str = results
+                        outfile_full_lines.append(output_src_str + "\n")
+                        outfile_tgt_lines.append(output_tgt_str + "\n")
+                        if len(outfile_tgt_lines) > 10000:
+                            outfile_full.writelines(outfile_full_lines)
+                            outfile_tgt.writelines(outfile_tgt_lines)
+                            outfile_full_lines = []
+                            outfile_tgt_lines =[]
+                count += 1
+
+                if count % 10000 == 0:
+                    print(count, "in", time.time() - start_time, "s")
+                    print(count_no_skip, "not skipped!")
+            if len(outfile_tgt_lines) > 0:
+                outfile_full.writelines(outfile_full_lines)
+                outfile_tgt.writelines(outfile_tgt_lines)
+    print("Overall: {}/{} finished successful!".format(count_no_skip, count))
 

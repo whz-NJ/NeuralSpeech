@@ -22,6 +22,7 @@ def replace_func(input_file):
             line = line.replace('zh-cn:', '。')
             line = line.replace('zh-tw:', '。')
             line = line.replace('zh-hk:', '。')
+            line = line.replace('zh-sg:', '。')
             sentences.extend([sentence + '\n' for sentence in preprocess.normAndTokenize(line, split_sentences=True)])
             if len(sentences) >= 10000:
                 outfile.writelines(sentences)
