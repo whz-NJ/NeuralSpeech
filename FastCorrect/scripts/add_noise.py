@@ -10,14 +10,12 @@ import numpy as np
 import trie
 import preprocess
 
-# infile = sys.argv[1]
-# outfile = sys.argv[2]
-# random.seed(int(sys.argv[3]))
-# np.random.seed(int(sys.argv[3]))
-random.seed(int(sys.argv[1]))
-np.random.seed(int(sys.argv[1]))
+random_seed = int(sys.argv[1])
+# random_seed = 3
+random.seed(random_seed)
+np.random.seed(random_seed)
 # input_file_dir = r'C:\\Code\\NeuralSpeech\\FastCorrect\\'
-# input_file_names = r'std_sports.txt' #output of wiki_preprocess.py
+# input_file_names = [r'std_sports.txt'] #output of wiki_preprocess.py
 input_file_dir = '../extracted/AA/'
 input_file_names = [r'std_zh_wiki_00', r'std_zh_wiki_01', r'std_zh_wiki_02'] #output of wiki_preprocess.py
 
@@ -113,8 +111,14 @@ SUB = 0
 INS_L = 1
 INS_R = 2
 DEL = 3
-all_op = [SUB, INS_L, INS_R, DEL]
-prob_op = [4/5, 1/20, 1/20, 1/10]
+all_op1 = [SUB, INS_L, INS_R, DEL]
+prob_op1 = [4 / 5, 1 / 20, 1 / 20, 1 / 10]
+
+all_op2 = [SUB, INS_L, INS_R, DEL]
+prob_op2 = [4/5, 2/25, 2/25, 1/25]
+
+all_op3 = [SUB, INS_L, INS_R]
+prob_op3 = [2/3, 1/6, 1/6]
 
 def add_char_noise(token, op, candidate, unuse=None):
     if op == SUB:
@@ -163,7 +167,7 @@ begin_time = time.time()
 for input_file_name in input_file_names:
     input_file_path = input_file_dir + input_file_name
     with open(input_file_path, 'r', encoding='utf-8') as infile:
-        output_file_path = input_file_dir + "/noised" + sys.argv[1] + "_" + input_file_name
+        output_file_path = input_file_dir + "/noised" + str(random_seed) + "_" + input_file_name
         with open(output_file_path, 'w', encoding='utf-8') as outfile:
             final_lines = []
             for count, line in enumerate(infile.readlines()):
@@ -178,13 +182,18 @@ for input_file_name in input_file_names:
                 i = 0
                 while i < tokens_num:
                     tok = tokens[i]
-
                     if random.random() < noise_ratio:
                         matched_info = trie_dict.get_pairs(tokens[i:])
                         if tok not in sim_dict.keys(): #对应英文单词（数字、特殊符号或汉字可以在相似字表里找到）
-                            meta_noise = np.random.choice(all_op, p=prob_op)
-                            #meta_noise = SUB
                             if len(matched_info) > 0:
+                                if matched_info[-1].matched_tokens_num > 2:
+                                    all_op = all_op3
+                                elif matched_info[-1].matched_tokens_num == 2:
+                                    all_op = all_op2
+                                else:
+                                    all_op = all_op1
+                                meta_noise = np.random.choice(all_op, p=prob_op1)
+                                # meta_noise = SUB
                                 matched_tokens_num, sim_tokens = add_tokens_noise(tok, meta_noise, matched_info)
                                 new_tokens.extend(sim_tokens)
                                 i += matched_tokens_num
@@ -200,14 +209,20 @@ for input_file_name in input_file_names:
                                 token_noise_ratio = matched_tokens_num / (matched_tokens_num + 4) #匹配的字符串越长，纠错项越容易被选到
                                 if token_noise_ratio > 0 and np.random.random() < token_noise_ratio:
                                 #if matched_tokens_num > 0:
-                                    meta_noise = np.random.choice(all_op, p=prob_op)
+                                    if matched_info[-1].matched_tokens_num > 2:
+                                        all_op = all_op3
+                                    elif matched_info[-1].matched_tokens_num == 2:
+                                        all_op = all_op2
+                                    else:
+                                        all_op = all_op1
+                                    meta_noise = np.random.choice(all_op, p=prob_op1)
                                     # meta_noise = SUB
                                     matched_tokens_num, sim_tokens = add_tokens_noise(tok, meta_noise, (matched_info if random.random() < 0.99 else None))
                                     new_tokens.extend(sim_tokens)
                                     i += matched_tokens_num
                                     continue
                                 i += 1
-                                meta_noise = np.random.choice(all_op, p=prob_op)
+                                meta_noise = np.random.choice(all_op1, p=prob_op1)
                                 #meta_noise = SUB
                                 meta_new_tokens = noise_meta_beam(tok, meta_noise, (sim_dict[tok[0]][1][tok] if random.random() < 0.99 else None))
                                 new_tokens.extend(meta_new_tokens)

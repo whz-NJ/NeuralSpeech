@@ -16,12 +16,17 @@ import random
 import signal
 import time
 
-input_file_dir = '../extracted/AA/'
 random_seed = sys.argv[1]
+#random_seed = 3
+
+input_file_dir = '../extracted/AA/'
+# input_file_dir = r'c:/code/neuralspeech/fastcorrect/'
 
 #output of gen_hypo_ref_file.py
 hypo_input_file_names =[f'hypo_noised{random_seed}_std_zh_wiki_00', f'hypo_noised{random_seed}_std_zh_wiki_01', f'hypo_noised{random_seed}_std_zh_wiki_02']
 ref_input_file_names =[f'ref_noised{random_seed}_std_zh_wiki_00', f'ref_noised{random_seed}_std_zh_wiki_01', f'ref_noised{random_seed}_std_zh_wiki_02']
+# hypo_input_file_names = [r'hypo7.txt']
+# ref_input_file_names = [r'ref7.txt']
 
 def set_timeout(num, callback):
     def wrap(func):
@@ -928,7 +933,7 @@ def cal_token_char_num(sentence):
     char_num = len("".join(sentence))
     return token_num * 1000 + char_num
 
-@set_timeout(30, after_timeout)  # 30s limitation for align
+#@set_timeout(30, after_timeout)  # 30s limitation for align
 def align_encoder(hypo_sen, ref_sen):
 
     werdur, _ = calculate_wer_dur_v1(hypo_sen, ref_sen, return_path_only=False)
