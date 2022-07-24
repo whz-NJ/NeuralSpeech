@@ -188,11 +188,14 @@ for input_file_name in input_file_names:
                             if len(matched_info) > 0:
                                 if matched_info[-1].matched_tokens_num > 2:
                                     all_op = all_op3
+                                    prob_op = prob_op3
                                 elif matched_info[-1].matched_tokens_num == 2:
                                     all_op = all_op2
+                                    prob_op = prob_op2
                                 else:
                                     all_op = all_op1
-                                meta_noise = np.random.choice(all_op, p=prob_op1)
+                                    prob_op = prob_op1
+                                meta_noise = np.random.choice(all_op, p=prob_op)
                                 # meta_noise = SUB
                                 matched_tokens_num, sim_tokens = add_tokens_noise(tok, meta_noise, matched_info)
                                 new_tokens.extend(sim_tokens)
@@ -211,11 +214,14 @@ for input_file_name in input_file_names:
                                 #if matched_tokens_num > 0:
                                     if matched_info[-1].matched_tokens_num > 2:
                                         all_op = all_op3
+                                        prob_op = prob_op3
                                     elif matched_info[-1].matched_tokens_num == 2:
                                         all_op = all_op2
+                                        prob_op = prob_op2
                                     else:
                                         all_op = all_op1
-                                    meta_noise = np.random.choice(all_op, p=prob_op1)
+                                        prob_op = prob_op1
+                                    meta_noise = np.random.choice(all_op, p=prob_op)
                                     # meta_noise = SUB
                                     matched_tokens_num, sim_tokens = add_tokens_noise(tok, meta_noise, (matched_info if random.random() < 0.99 else None))
                                     new_tokens.extend(sim_tokens)
