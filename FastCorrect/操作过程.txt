@@ -1,0 +1,25 @@
+执行 gen_sports_corpus_txt.py 抽取龙猫语料，转换为标准化格式的 .txt 文件
+执行 NoiseGenerator.java 将语料通过 tts/iat 处理，得到讯飞转写语料
+
+下面可以在 移动云共有机器上执行：
+(新增) 执行 asr_files_split.py 将讯飞转写语料划分为训练集、验证集、测试集
+执行 asr_preprocess.py 将讯飞转写语料标准化
+执行 gen_hypo_ref_file.py 将标准化的讯飞语料分割为 hypo* 和 ref* 文件。
+执行 align_cal_werdur_v2.py 对齐 hypo* 和 ref* 文件
+将 data/werdur_data_aishell 和体育语料合并:
+   cd /root/sports_aishell_corpus
+   cat ~/sports_corpus2/hypo_std_train_noised_corpus.txt.src.werdur.full >> train.zh_CN
+   cat ~/sports_corpus2/ref_std_train_noised_corpus.txt.tgt >> train.zh_CN_tgt
+   cat ~/sports_corpus2/hypo_std_valid_noised_corpus.txt.src.werdur.full >> valid.zh_CN
+   cat ~/sports_corpus2/ref_std_valid_noised_corpus.txt.tgt >> valid.zh_CN_tgt
+
+
+下面操作需要在九天上执行：
+执行 split_train_valid_test.py 分割训练集、验证集、测试集 (前面调用了 asr_files_split.py 后，这里就不需要执行了)
+执行 data-gen.sh 将对齐结果二进制化
+执行 train_ft.sh 对模型微调
+执行 gen_asr_eval_data.py 生成验证集、测试集的 data.json
+执行 test_ft.sh 得到 /root/fastcorrect/asr_eval_data 目录test或dev子目录下数据的模型预测效果
+执行 cal_wer_aishell.sh 展示模型在验证集上的效果
+
+
