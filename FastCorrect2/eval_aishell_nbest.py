@@ -51,9 +51,9 @@ except:
 #checkpoint_file = "checkpoint_best.pt"
 print("test {}/{}".format(model_name_or_path, checkpoint_file))
 
-data_name_or_path =  # <Path-to-AISHELL1-Training-Binary-Data>
+data_name_or_path = 'data/werdur_data_aishell.bin' # <Path-to-AISHELL1-Training-Binary-Data>
 bpe = "sentencepiece"
-sentencepiece_model =  # <path-to-sentencepiece_model>, you can use arbitrary sentencepiece for our pretrained model since it is a char-level model 
+sentencepiece_model = '/tmp/aishell.model' # <path-to-sentencepiece_model>, you can use arbitrary sentencepiece for our pretrained model since it is a char-level model
 
 commonset_dir = "./eval_data"
 res_dir = os.path.join(model_name_or_path, ("results_aishell" if (iter_decode_max_iter == -1) else ("results_aishell_b" + str(iter_decode_max_iter) + '_t' + str(edit_thre) + '_' + nbest_infer_type)).replace('results', 'results_' + str(test_epoch)))
@@ -97,6 +97,13 @@ for input_tsv in [os.path.join(commonset_dir, f, "aligned_nbest_token_raw.data.j
             translated = " ".join(text.split(" ||| ")[0].replace('<void>', '').split())
             exc_time = 0.0
         all_time.append(exc_time)
+        print("orig      =" + eval_origin_dict["utts"][k]["output"][0]["token"])
+        print("err       =" + text.split(" ||| ")[0])
+        print("translated=" + translated)
+        print("\n")
+        cnt=cnt+1
+        if(cnt >= 400):
+            break
         eval_origin_dict["utts"][k]["output"][0]["rec_text"] = " ".join("".join(translated.split()).replace('▁', ' ').strip().split())
         #translated_char = [i for i in eval_origin_dict["utts"][k]["output"][0]["rec_text"]]
         eval_origin_dict["utts"][k]["output"][0]["rec_token"] = translated.replace('<void>', '')

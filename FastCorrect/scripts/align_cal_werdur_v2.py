@@ -16,17 +16,17 @@ import random
 import signal
 import time
 
-random_seed = sys.argv[1]
-#random_seed = 3
+#random_seed = sys.argv[1]
+random_seed = 3
 
 input_file_dir = '../extracted/AA/'
-# input_file_dir = r'c:/code/neuralspeech/fastcorrect/'
+input_file_dir = r'c:/code/neuralspeech/fastcorrect/'
 
 #output of gen_hypo_ref_file.py
-hypo_input_file_names =[f'hypo_noised{random_seed}_std_zh_wiki_00', f'hypo_noised{random_seed}_std_zh_wiki_01', f'hypo_noised{random_seed}_std_zh_wiki_02']
-ref_input_file_names =[f'ref_noised{random_seed}_std_zh_wiki_00', f'ref_noised{random_seed}_std_zh_wiki_01', f'ref_noised{random_seed}_std_zh_wiki_02']
-# hypo_input_file_names = [r'hypo7.txt']
-# ref_input_file_names = [r'ref7.txt']
+#hypo_input_file_names =[f'hypo_noised{random_seed}_std_zh_wiki_00', f'hypo_noised{random_seed}_std_zh_wiki_01', f'hypo_noised{random_seed}_std_zh_wiki_02']
+#ref_input_file_names =[f'ref_noised{random_seed}_std_zh_wiki_00', f'ref_noised{random_seed}_std_zh_wiki_01', f'ref_noised{random_seed}_std_zh_wiki_02']
+hypo_input_file_names = [r'hypo7.txt']
+ref_input_file_names = [r'ref7.txt']
 
 def set_timeout(num, callback):
     def wrap(func):

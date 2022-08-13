@@ -9,11 +9,13 @@ cd $EXP_HOME
 #pip install --editable .
 cd $EXP_HOME
 export MKL_THREADING_LAYER=GNU
+#export CUDA_VISIBLE_DEVICES=0,1,2,3
+export CUDA_VISIBLE_DEVICES=0
 
-DATA_PATH=   #<Path-to-AISHELL1-Binary-Data>
+DATA_PATH=data/wiki_data.bin2   #<Path-to-AISHELL1-Binary-Data>
 export PYTHONPATH=$EXP_HOME/FC_utils:$PYTHONPATH
 
-SAVE_DIR=   #<PATH-to-Pretrain-Save-Dir>
+SAVE_DIR=models/pretrain  #<PATH-to-Pretrain-Save-Dir>
 mkdir -p $SAVE_DIR
 fairseq-train $DATA_PATH --task fastcorrect \
         --arch fastcorrect --lr 5e-4 --lr-scheduler inverse_sqrt \

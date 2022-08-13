@@ -10,22 +10,25 @@ import numpy as np
 import trie
 import preprocess
 
-random_seed = int(sys.argv[1])
-# random_seed = 3
+#random_seed = int(sys.argv[1])
+random_seed = 3
 random.seed(random_seed)
 np.random.seed(random_seed)
-# input_file_dir = r'C:\\Code\\NeuralSpeech\\FastCorrect\\'
-# input_file_names = [r'std_sports.txt'] #output of wiki_preprocess.py
 input_file_dir = '../extracted/AA/'
 input_file_names = [r'std_zh_wiki_00', r'std_zh_wiki_01', r'std_zh_wiki_02'] #output of wiki_preprocess.py
+input_file_dir = r'C:\\Code\\NeuralSpeech\\FastCorrect\\'
+input_file_names = [r'std_sports.txt'] #output of wiki_preprocess.py
+
+#noise_ratio = 0.15
+noise_ratio = 1.1
 
 sim_dict = {}
 trie_dict = trie.Trie()
 vocab_1char = []
 vocab_2char = []
 
-with open('./scripts/sim_prun_char.txt', 'r', encoding='utf-8') as infile:
-#with open(r'C:\Code\NeuralSpeech\FastCorrect\scripts\sim_prun_char.txt', 'r', encoding='utf-8') as infile:
+#with open('./scripts/sim_prun_char.txt', 'r', encoding='utf-8') as infile:
+with open(r'C:\Code\NeuralSpeech\FastCorrect\scripts\sim_prun_char.txt', 'r', encoding='utf-8') as infile:
     for line in infile.readlines():
         line = line.strip()
         first_char = line[0]
@@ -47,8 +50,8 @@ with open('./scripts/sim_prun_char.txt', 'r', encoding='utf-8') as infile:
             continue
         sim_dict[first_char][vocab_length][vocab] = sim_vocab
 
-with open('./scripts/chinese_char_sim.txt', 'r', encoding='utf-8') as infile:
-#with open(r'C:\Code\NeuralSpeech\FastCorrect\scripts\chinese_char_sim.txt', 'r', encoding='utf-8') as infile:
+#with open('./scripts/chinese_char_sim.txt', 'r', encoding='utf-8') as infile:
+with open(r'C:\Code\NeuralSpeech\FastCorrect\scripts\chinese_char_sim.txt', 'r', encoding='utf-8') as infile:
     for id, line in enumerate(infile.readlines()):
         line = line.strip()
         first_char = line[0]
@@ -69,7 +72,7 @@ with open('./scripts/chinese_char_sim.txt', 'r', encoding='utf-8') as infile:
 
 force_correction_rule_files = [r'./scripts/std_force_correction_rules.txt',
                                r'./scripts/hard_force_correction_rules.txt']
-#force_correction_rule_files = [r'C:\Code\NeuralSpeech\FastCorrect\scripts\std_test_rules.txt']
+force_correction_rule_files = [r'C:\Code\NeuralSpeech\FastCorrect\scripts\std_test_rules.txt']
 for rule_file_path in force_correction_rule_files:
     with open(rule_file_path, 'r', encoding='utf-8') as infile:
         for id, line in enumerate(infile.readlines()):
@@ -101,8 +104,6 @@ for rule_file_path in force_correction_rule_files:
                 continue
             trie_dict.insert(tokens, sim_tokens)
 
-noise_ratio = 0.15
-#noise_ratio = 1.1
 beam_size = 1
 
 char_candidate_logit = [6, 5, 5, 4, 4, 3, 3, 3, 2, 2, 2, 1, 1, 1, 1]

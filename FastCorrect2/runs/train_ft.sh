@@ -10,11 +10,11 @@ cd $EXP_HOME
 cd $EXP_HOME
 export MKL_THREADING_LAYER=GNU
 
-DATA_PATH=   #<Path-to-AISHELL1-Binary-Data>
+DATA_PATH=data/werdur_data_aishell.bin  #<Path-to-AISHELL1-Binary-Data>
 export PYTHONPATH=$EXP_HOME/FC_utils:$PYTHONPATH
 
-PRETRAINED=   #<PATH-to-Pretrain-Save-Dir>/checkpoint10.pt
-SAVE_DIR=   #<PATH-to-AISHELL1-Save-Dir>
+PRETRAINED=models/pretrain/checkpoint10.pt   #<PATH-to-Pretrain-Save-Dir>/checkpoint10.pt
+SAVE_DIR=models/finetune   #<PATH-to-AISHELL1-Save-Dir>
 mkdir -p $SAVE_DIR
 fairseq-train $DATA_PATH --task fastcorrect \
         --arch fastcorrect --lr 5e-4 --lr-scheduler inverse_sqrt \
@@ -28,7 +28,7 @@ fairseq-train $DATA_PATH --task fastcorrect \
         --max-tokens 5000 \
         --closest-label-type "all" \
         --pos-before-reshape \
-         --required-batch-size-multiple 1 \
+        --required-batch-size-multiple 1 \
         --werdur-max-predict 3 \
         --closest-use-which "dloss" \
         --remove-edit-emb \

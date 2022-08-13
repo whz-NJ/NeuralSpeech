@@ -17,7 +17,6 @@ import random
 import signal
 import time
 
-
 def set_timeout(num, callback):
     def wrap(func):
         def handle(signum, frame):
@@ -42,25 +41,39 @@ def set_timeout(num, callback):
 def after_timeout():
     pass
 
+from g2pM import G2pM
+model = G2pM()
+# hypo_file = sys.argv[1] # output of gen_hypo_ref_files.py
+# ref_file = sys.argv[2] # output of gen_hypo_ref_files.py
+hypo_file = "c:/code/neuralspeech/fastcorrect2/hypo7.txt"
+ref_file = "c:/code/neuralspeech/fastcorrect2/ref7.txt"
 
-#from g2pM import G2pM
-#model = G2pM()
-
-# all_char_pinyin.txt contains token and its pinyin string, splitted by '\t', which can be obtained with g2pM
 g2pM_dict = {}
-with open('all_char_pinyin.txt', 'r', encoding='utf-8') as infile:
+with open(hypo_file, 'r', encoding='utf-8') as infile:
     for line in infile.readlines():
-        line = line.strip().split('\t')
-        
-        assert len(line) == 2 or len(line) == 1
-        if len(line) == 2:
-            g2pM_dict[line[0]] = line[1]
-        else:
-            g2pM_dict[line[0]] = line[0]
-            print("No pinyin warning:", line[0])
+        pinyins = model(line, tone=False, char_split=True)
+        for word, pinyin in zip(line, pinyins):
+            g2pM_dict[word] = pinyin
+with open(ref_file, 'r', encoding='utf-8') as infile:
+    for line in infile.readlines():
+        pinyins = model(line, tone=False, char_split=True)
+        for word, pinyin in zip(line, pinyins):
+            g2pM_dict[word] = pinyin
 
-hypo_file = sys.argv[1]
-ref_file = sys.argv[2]
+# # all_char_pinyin.txt contains token and its pinyin string, splitted by '\t', which can be obtained with g2pM
+#
+# with open('all_char_pinyin.txt', 'r', encoding='utf-8') as infile:
+#     for line in infile.readlines():
+#         line = line.strip().split('\t')
+#
+#         assert len(line) == 2 or len(line) == 1
+#         if len(line) == 2:
+#             g2pM_dict[line[0]] = line[1]
+#         else:
+#             g2pM_dict[line[0]] = line[0]
+#             print("No pinyin warning:", line[0])
+
+
 hypo_file_out = hypo_file
 ref_file_out = ref_file
 #tsv_file = sys.argv[1]
@@ -297,10 +310,10 @@ def cal_charwer_zh(hypo_string, ref_string):
     #print(hypo_string)
     #print(ref_string)
     if hypo_string:
-        hypo_string = "".join([g2pM_dict[i] for i in hypo_string])
+        hypo_string = "".join([g2pM_dict.get(i, i) for i in hypo_string])
         #hypo_string = "".join(model(hypo_string, tone=False, char_split=False))
     if ref_string:
-        ref_string = "".join([g2pM_dict[i] for i in ref_string])
+        ref_string = "".join([g2pM_dict.get(i, i) for i in ref_string])
         #ref_string = "".join(model(ref_string, tone=False, char_split=False))
     #print(hypo_string)
     #print(ref_string)
@@ -1028,7 +1041,7 @@ def cal_token_char_num(sentence):
     char_num = len("".join(sentence))
     return token_num * 1000 + char_num
 
-@set_timeout(30, after_timeout)  # 30s limitation for align
+#@set_timeout(30, after_timeout)  # 30s limitation for align
 def align_nbest_encoder(nbest_list, ref_sen):
     token_char_num_list = [cal_token_char_num(i) for i in nbest_list]
     origin2sort = list(np.argsort(token_char_num_list, kind='stable')[::-1])

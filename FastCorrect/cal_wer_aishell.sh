@@ -3,7 +3,8 @@
 
 sckt_path='/root/fastcorrect/sctk-2.4.10/bin'
 
-result_dir='/root/fastcorrect/models/finetune/results_best_aishell_b0_t0.0/dev'
+#result_dir='/root/fastcorrect/models/finetune/results_best_aishell_b0_t0.0/dev'
+result_dir='/root/fastcorrect/models/finetune/results_best_aishell_b0_t0.0/test'
 #if ! [ $1 ]; then
 #  echo "Usage: bash cal_wer_aishell.sh <path-to-result> <path-to-sctk-bin>"
 #  exit 1

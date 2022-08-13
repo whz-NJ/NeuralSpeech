@@ -6,6 +6,7 @@ cd $EXP_HOME
 
 cd $EXP_HOME
 
+# output of split_train_valid_test.py
 DATA_PATH=data/werdur_data_aishell.bin   #<Path-to-Binary-Data>
 export PYTHONPATH=$EXP_HOME/FastCorrect:$PYTHONPATH
 

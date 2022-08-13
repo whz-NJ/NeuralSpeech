@@ -64,6 +64,7 @@ def main(args):
 
     def build_dictionary(filenames, src=False, tgt=False):
         assert src ^ tgt
+        logger.info("enter build_dictionary()")
         return task.build_dictionary(
             filenames,
             workers=args.workers,
@@ -80,6 +81,7 @@ def main(args):
         raise FileExistsError(dict_path(args.target_lang))
 
     if args.joined_dictionary:
+        print("joined_dictionary is True")
         assert (
             not args.srcdict or not args.tgtdict
         ), "cannot use both --srcdict and --tgtdict with --joined-dictionary"
@@ -98,6 +100,7 @@ def main(args):
             )
         tgt_dict = src_dict
     else:
+        print("joined_dictionary is False")
         if args.srcdict:
             src_dict = task.load_dictionary(args.srcdict)
         else:
@@ -116,6 +119,7 @@ def main(args):
                 tgt_dict = build_dictionary([train_path(args.target_lang)], tgt=True)
         else:
             tgt_dict = None
+    logger.info("build_dictionary() finished.")
 
     src_dict.save(dict_path(args.source_lang))
     if target and tgt_dict is not None:
