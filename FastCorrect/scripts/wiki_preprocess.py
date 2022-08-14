@@ -6,7 +6,7 @@ import preprocess
 
 # data_path = '../'
 # data_names = ['sports.txt']
-data_path = '../extracted/AA/'
+data_path = '/root/extracted/AA/'
 data_names = ['zh_wiki_00', 'zh_wiki_01', 'zh_wiki_02']
 def replace_func(input_file):
     input_file_dir = os.path.dirname(input_file)
@@ -54,11 +54,16 @@ def run():
                 for sentence in sentences:
                     tokens.extend(sentence.split())
                 for token in tokens:
-                    count = preprocess.tokens_count_dict.get(token.lower(), 0)
+                    tmp_token = token.upper()
+                    if tmp_token != token: #同时包含大小写字母，则统一转换为小写
+                        tmp_token = token.lower()
+                        count = preprocess.tokens_count_dict.get(tmp_token, 0)
+                    else: #否则统一用大写
+                        count = preprocess.tokens_count_dict.get(tmp_token, 0)
                     if count >= MIN_RULE_TOKEN_COUNT:
                         continue
                     # 强制纠错中的token一定要出现在词表中
-                    preprocess.tokens_count_dict[token.lower()] = MIN_RULE_TOKEN_COUNT + count + 1
+                    preprocess.tokens_count_dict[tmp_token] = MIN_RULE_TOKEN_COUNT + count + 1
 
     #处理各wiki文件
     for data_name in data_names:
