@@ -4,7 +4,7 @@ import re
 import bson
 import json
 
-input_file_dir = r'C:\工作任务\AIUI\NLP模型测试\BERT\足球10场_new'
+input_file_dir = r'C:\工作任务\AIUI\NLP模型测试\BERT\足球2场'
 
 asr_corpus_file_paths = []
 bert_asr_corpus_file_paths = []

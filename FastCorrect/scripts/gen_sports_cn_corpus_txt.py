@@ -94,8 +94,6 @@ def loadAllCorpus(root_dir):
             with open(saved_corpus_path, 'w', encoding='utf-8') as outfile:
                 outfile.writelines(corpus_list)
 
-        for dir in dirs:
-            loadAllCorpus(os.path.join(root, dir))
 loadAllCorpus(corpus_root_dir)
 
 

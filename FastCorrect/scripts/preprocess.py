@@ -478,6 +478,7 @@ def main():
     # print(normAndTokenize("域名是migu.cn或咪咕点。Cn", split_sentences=True))
     # print(normAndTokenize("登陆咪咕 + 木鸡结算系统"))
     print(normAndTokenize("log佛j单身dog.v23.ab"))
+    print(normAndTokenize("ocean log佛j单身dog.v23.ab"))
     # print(normAndTokenize("hello，今天是周万军的生日"))
 
     # print(normAndTokenize4Ch('1034.5秒')[0])
