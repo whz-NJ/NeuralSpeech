@@ -51,7 +51,7 @@ seperator_map = {}
 for ch in r'<>?,，。！？;；()（）[]【】{}、《》「」—':
     seperator_map[ch] = ch
 kept_char_map = {}
-for ch in r'%@.:+-=/×÷~&':
+for ch in r'%@.:+-=/×÷~&': #虽然英文里有'这里也不要了，后面实际纠错时也调用preprocess，删除不要的符号
     kept_char_map[ch] = ch
 
 char_digits_pattern = re.compile(r'^([0-9.]*)([a-zA-Z]+)([0-9.]*)([a-zA-Z]*)([0-9.]*)$')
