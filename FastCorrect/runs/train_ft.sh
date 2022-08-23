@@ -12,6 +12,7 @@ export PYTHONPATH=$EXP_HOME/FC_utils:$PYTHONPATH
 PRETRAINED=models/pretrain/fastcorrect_pretrain.pt  #<PATH-to-Pretrain-Save-Dir>/checkpoint10.pt
 SAVE_DIR=models/finetune   #<PATH-to-AISHELL1-Save-Dir>
 mkdir -p $SAVE_DIR
+export CUDA_VISIBLE_DEVICES=0
 fairseq-train $DATA_PATH --task fastcorrect \
         --arch fastcorrect --lr 5e-4 --lr-scheduler inverse_sqrt \
         --length-loss-factor 0.5 \

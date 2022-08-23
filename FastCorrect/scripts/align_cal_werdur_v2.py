@@ -964,17 +964,15 @@ for hypo_file_name, ref_file_name in zip(hypo_input_file_names, ref_input_file_n
             tokens = line.strip().split()
             all_hypo_line.append(tokens)
             for token in tokens:
-                if token in g2pM_dict.keys():
-                    continue
                 if len(token) == 1:
                     if '\u4e00' <= token[0] <= '\u9fa5':  # 汉字
+                        if token in g2pM_dict.keys():
+                            continue
                         g2pM_dict[token] = preprocess.unify_pinyin(model(token, tone=False, char_split=True)[0])
-                    elif 'a' < token[0] <= 'z' or 'A' <= token[0] <= 'Z':
-                        g2pM_dict[token.lower()] = token[0].lower()  # 不考虑大小写
-                    else:
-                        raise ValueError("impossible token {}!".format(token))
-                else:  # 英文单词
-                    g2pM_dict[token.lower()] = token.lower()  # 不考虑大小写
+                    else: # 英文字母或特殊符号的拼音是它本身，不加入 g2pM_dict
+                        continue
+                else:  # 英文单词的拼音是它本身，不加入 g2pM_dict
+                    continue
 
     print(f"Loading: {ref_file_path} ...")
     with open(ref_file_path, 'r', encoding='utf-8') as infile:
@@ -982,15 +980,11 @@ for hypo_file_name, ref_file_name in zip(hypo_input_file_names, ref_input_file_n
             tokens = line.strip().split()
             all_ref_line.append(tokens)
             for token in tokens:
-                if token in g2pM_dict.keys():
-                    continue
                 if len(token) == 1:
                     if '\u4e00' <= token[0] <= '\u9fa5':  # 汉字
+                        if token in g2pM_dict.keys():
+                            continue
                         g2pM_dict[token] = preprocess.unify_pinyin(model(token, tone=False, char_split=True)[0])
-                    else:
-                        g2pM_dict[token.lower()] = token[0].lower()
-                else:  # 英文单词
-                    g2pM_dict[token.lower()] = token.lower()
 
     ##计算对齐效果 富尔基耶	-2这副耳机
     start_time = time.time()
