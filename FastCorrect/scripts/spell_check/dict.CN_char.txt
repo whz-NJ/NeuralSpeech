@@ -6958,7 +6958,6 @@ adcc 10019
 arcore 10018
 dtmf 10018
 isd 10018
-migu 10018
 ggg 10018
 hss 10018
 xuan 10018
