@@ -18,7 +18,7 @@ input_file_dir = '../extracted/AA/'
 input_file_names = [r'std_zh_wiki_00', r'std_zh_wiki_01', r'std_zh_wiki_02'] #output of wiki_preprocess.py
 dict_file_path = "../dictionary/short.dict.CN_char.txt"
 noise_ratio = 0.15
-noise_ratio = 1.1
+
 
 sim_dict = {}
 trie_dict = trie.Trie()

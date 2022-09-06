@@ -1,10 +1,22 @@
-执行 gen_sports_corpus_txt.py 抽取龙猫语料，转换为标准化格式的 .txt 文件
-执行 NoiseGenerator.java 将语料通过 tts/iat 处理，得到讯飞转写语料
+执行 gen_sports_cn_corpus_txt.py（或 gen_sports_corpus_txt.py） 抽取龙猫语料，转换为标准化格式的 .txt 文件
+执行 NoiseGenerator.java 将语料通过 tts/iat 处理，得到转写语料 (sports_corpus_en 目录)
+执行 wiki_sports_asr_preprocess.py 将维基百科、运动语料标准化，并抽取字典 (std_sports_corpus_en 目录)
+执行 EnWordsNoiseGenerator.java 得到英文单词纠错集
+执行 short_dictionary_corrections.py 精简词表（先取字典的前6万个词，再看这6万个词讯飞误转词，一起加入词表）
+执行五遍 add_noise.py 给wiki语料添加不同噪声（运动语料经过ASR转写已经带有噪声了）
+执行 asr_files_split.py 将运动语料拆分为训练集、验证集、测试集
+执行 gen_hypo_ref_file.py 将wiki和运动语料分成 hypo* 和 ref* 文件。
+执行 align_cal_werdur_v2.py 对齐 hypo* 和 ref* 文件
+执行 split_wiki_train_valid_test.py 将wiki语料分为训练集、验证集、测试集
+执行 data-gen.sh 将对齐结果二进制化
+执行 train_pretrain.sh 训练模型
+执行 train_ft.sh 对模型微调
 
-下面可以在 移动云共有机器上执行：
-(新增) 执行 asr_files_split.py 将讯飞转写语料划分为训练集、验证集、测试集
-执行 asr_preprocess.py 将讯飞转写语料标准化
-执行 gen_hypo_ref_file.py 将标准化的讯飞语料分割为 hypo* 和 ref* 文件。
+
+下面可以在 公有云机器上执行：
+(新增) 执行 asr_files_split.py 将转写语料划分为训练集、验证集、测试集
+执行 asr_preprocess.py 将转写语料标准化
+执行 gen_hypo_ref_file.py 将标准化的语料分割为 hypo* 和 ref* 文件。
 执行 align_cal_werdur_v2.py 对齐 hypo* 和 ref* 文件
 将 data/werdur_data_aishell 和体育语料合并:
    cd /root/sports_aishell_corpus
@@ -14,7 +26,7 @@
    cat ~/sports_corpus2/ref_std_valid_noised_corpus.txt.tgt >> valid.zh_CN_tgt
 
 
-下面操作需要在九天上执行：
+下面操作需要在GPU机器上执行：
 执行 split_train_valid_test.py 分割训练集、验证集、测试集 (前面调用了 asr_files_split.py 后，这里就不需要执行了)
 执行 data-gen.sh 将对齐结果二进制化
 执行 train_ft.sh 对模型微调
@@ -22,4 +34,6 @@
 执行 test_ft.sh 得到 /root/fastcorrect/asr_eval_data 目录test或dev子目录下数据的模型预测效果
 执行 cal_wer_aishell.sh 展示模型在验证集上的效果
 
+千万不要犯把龙猫语料做fc纠错，再和龙猫比的错误。
+应该用讯飞转写再fc纠错，再和原始龙猫比较。
 
