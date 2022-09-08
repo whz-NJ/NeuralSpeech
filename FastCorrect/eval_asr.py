@@ -26,17 +26,17 @@ except:
     model_name_or_path = "checkpoints/shared_baseline"
 
 try:
-    iter_decode_max_iter = int(sys.argv[4])
+    iter_decode_max_iter = int(sys.argv[5])
 except:
     iter_decode_max_iter = -1
 
 try:
-    edit_thre = float(sys.argv[5])
+    edit_thre = float(sys.argv[6])
 except:
     edit_thre = 0
 
 try:
-    test_epoch = int(sys.argv[6])
+    test_epoch = int(sys.argv[7])
     checkpoint_file = "checkpoint{}.pt".format(test_epoch)
 except:
     test_epoch = 'best'
@@ -44,7 +44,8 @@ except:
 
 print("test {}/{}".format(model_name_or_path, checkpoint_file))
 # the model will only use the dictionary in data_name_or_path.
-data_name_or_path = "/root/fastcorrect/data/werdur_data_aishell.bin" # <Path-to-AISHELL1-Training-Binary-Data>
+# data_name_or_path = "/root/fastcorrect/data/werdur_data_aishell.bin" # <Path-to-AISHELL1-Training-Binary-Data>
+data_name_or_path = sys.argv[4] # <Path-to-AISHELL1-Training-Binary-Data>
 bpe = "sentencepiece"
 sentencepiece_model = "/root/fastcorrect/sentencepiece/FastCorrect_zhwiki_sentencepiece.model" # <path-to-sentencepiece_model>, you can use arbitrary sentencepiece for our pretrained model since it is a char-level model
 
@@ -75,9 +76,9 @@ for input_tsv in [os.path.join(commonset_dir, f, "data.json") for f in short_set
     translated_output_dict = {}
     processed_items = 0
     for k, v in translate_input_dict.items():
-        text = v[0]
+        text = v[0] #ASR识别结果
         #print(text)
-        gt = v[1]
+        gt = v[1] #原始语料
         start_time = time.time()
         time_ok = False
         try:
@@ -105,6 +106,7 @@ for input_tsv in [os.path.join(commonset_dir, f, "data.json") for f in short_set
 
         eval_origin_dict["utts"][k]["output"][0]["rec_text"] = " ".join("".join(translated.split()).replace('▁', ' ').strip().split())
         translated_char = [i for i in eval_origin_dict["utts"][k]["output"][0]["rec_text"]]
+        # 将ASR转写出的结果，经过FC模型处理后，替换到 data.json 中的 rec_token/rec_text 中
         eval_origin_dict["utts"][k]["output"][0]["rec_token"] = " ".join(translated_char)
         processed_items += 1
         if processed_items % 500 == 0:
@@ -115,4 +117,5 @@ for input_tsv in [os.path.join(commonset_dir, f, "data.json") for f in short_set
     with open(os.path.join(res_dir, input_tsv.split('/')[-2], input_tsv.split('/')[-2] + "_time.txt"), 'w') as outfile:
         outfile.write("{}\t{}\t{}\n".format(len(all_time), sum(all_time), sum(all_time)/len(all_time)))
     json.dump(eval_origin_dict, open(os.path.join(res_dir, input_tsv.split('/')[-2], 'data.json'), 'w', encoding='utf-8'), indent=4, sort_keys=True, ensure_ascii=False)
+
 
