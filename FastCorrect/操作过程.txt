@@ -46,3 +46,11 @@
 千万不要犯把龙猫语料做fc纠错，再和龙猫比的错误。
 应该用讯飞转写再fc纠错，再和原始龙猫比较。
 
+输入是一个汉字的 one-hot encoding 编码，embedding 层是 512 维
+encoder 是8个头，6层，中间层特征向量编码 512 维
+decoder 是8个头，6层，中间层特征向量编码 512 维
+DurationPredictor 5层，每层是1维卷积+relu激活函数+层归一化+Dropout，最后是 线性层+relu+层归一化+Dropout
+
+计算ngram-score，如果达不到平均数，则加入疑似错误
+找到疑似错误的同音字，计算替换后的ppl-score，如果增加了，则替换
+kenlm模型需要语料训练，准确率有限。

@@ -1,5 +1,6 @@
 import cn2an
 import re
+from g2pM import G2pM
 
 digit_map = {}
 digit_map['0'] = '零'
@@ -102,7 +103,6 @@ def unify_pinyin(pinyin):
             py = py[:-3] + postfix[:2]
     return py
 
-from g2pM import G2pM
 model = G2pM()
 g2pM_dict = {}
 tokens_count_dict = {}
