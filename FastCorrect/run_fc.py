@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import json
 import sys
 import argparse
@@ -45,6 +46,7 @@ webapp = Flask(__name__)
 @webapp.route('/fast_correct', methods=['POST'])
 def fast_correct():
     # parse request body
+    # requst_body = request.get_data(as_text=True).decode('utf-8')
     requst_body = request.get_data(as_text=True)
     request_json = json.loads(requst_body)
     text = request_json['text']
@@ -89,6 +91,7 @@ def fast_correct():
         return response
 
 if __name__ == '__main__':
+    webapp.config['JSON_AS_ASCII'] = False
     webapp.run(host=SERVE_HOST, port=SERVE_PORT, threaded=True, debug=False)
 
 

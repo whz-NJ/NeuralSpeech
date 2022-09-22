@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import cn2an
 import re
 from g2pM import G2pM
@@ -460,6 +461,8 @@ def normAndTokenize4Ch(line, min_sentence_len=2, split_sentences=False):
     return sentences
 
 def main():
+    print(normAndTokenize("\u597d\u6c42"))
+    print(normAndTokenize("好求，乌拉归进求啦！"))
     print(normAndTokenize("二点三零点四"))
     print(normAndTokenize("版本号是V二点三零点四"))
     # print(normAndTokenize("版本号是V二点三零点四"))
