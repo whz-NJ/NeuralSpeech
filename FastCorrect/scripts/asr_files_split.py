@@ -1,8 +1,11 @@
 import os
 import codecs
+import random
 
 split_rate = [0.9, 0.05, 0.05]
 processed_corpus_root_dir = "/root/std_sports_corpus_en"
+aiui_corpus_file_names = ["aiui_football.txt"] #从aiui系统导出的语料
+
 asr_output_file_name = ""
 def replace_dot_path(path):
     pwd = os.getcwd()
@@ -76,6 +79,41 @@ def splitTrainValidTest(root_dir):
                 corpus_asr_lines.extend(corpus_file.readlines())
         with open(test_asr_output_file_path, "a+", encoding='utf-8') as test_file:
             test_file.writelines(corpus_asr_lines)
+
+def splitTrainValidTest_aiui():
+    corpus_asr_lines = []
+    for file in aiui_corpus_file_names:
+        with open(os.path.join(processed_corpus_root_dir, file), 'r', encoding='utf-8') as corpus_file:
+            corpus_asr_lines.extend(corpus_file.readlines())
+    corpuse_nums = len(corpus_asr_lines)
+    train_stop_index = int(corpuse_nums * split_rate[0])
+    valid_stop_index = int(corpuse_nums * (split_rate[0] + split_rate[1]))
+    corpus_indexes = list(range(corpuse_nums))
+    random.shuffle(corpus_indexes)
+
+    # 抽取训练集数据
+    corpus_lines = []
+    for idx in corpus_indexes[0:train_stop_index]:
+        ref_hypo = corpus_asr_lines[idx].strip() + "\n"
+        corpus_lines.append(ref_hypo)
+    with open(train_asr_output_file_path, "a+", encoding='utf-8') as train_file:
+        train_file.writelines(corpus_lines)
+
+    # 抽取验证集数据
+    corpus_lines = []
+    for idx in corpus_indexes[train_stop_index:valid_stop_index]:
+        ref_hypo = corpus_asr_lines[idx].strip() + "\n"
+        corpus_lines.append(ref_hypo)
+    with open(valid_asr_output_file_path, "a+", encoding='utf-8') as valid_file:
+        valid_file.writelines(corpus_lines)
+
+    # 抽取测试集数据
+    corpus_lines = []
+    for idx in corpus_indexes[valid_stop_index:]:
+        ref_hypo = corpus_asr_lines[idx].strip() + "\n"
+        corpus_lines.append(ref_hypo)
+    with open(test_asr_output_file_path, "a+", encoding='utf-8') as test_file:
+        test_file.writelines(corpus_lines)
 
 splitTrainValidTest(processed_corpus_root_dir)
 

@@ -10,7 +10,8 @@ import os
 #input_file_names =[r'std_train_noised_corpus.txt', r'std_valid_noised_corpus.txt', r'std_test_noised_corpus.txt']
 #input_file_dir = '/root/extracted/AA'
 #input_file_dir = '/root/std_sports_corpus_en'
-input_file_dir = '/root/std_ftb_sports_corpus_en'
+#input_file_dir = '/root/std_ftb_sports_corpus_en'
+input_file_dir = '/root/std_sports_corpus_en2'
 #input_file_names =[r'noised9_std_zh_wiki_00',r'noised9_std_zh_wiki_01',r'noised9_std_zh_wiki_02']
 #input_file_names =[r'noised1_std_zh_wiki_00',r'noised1_std_zh_wiki_01',r'noised1_std_zh_wiki_02',
 #        r'noised3_std_zh_wiki_00',r'noised3_std_zh_wiki_01',r'noised3_std_zh_wiki_02',

@@ -1,12 +1,14 @@
 执行 gen_sports_cn_corpus_txt.py（或 gen_sports_corpus_txt.py） 抽取龙猫语料，转换为标准化格式的 .txt 文件
-执行 EnWordsNoiseGenerator.java 将语料通过 tts/iat 处理，得到转写语料 (sports_corpus_en 目录)
+执行 NoiseGenerator.java 将语料通过 tts/iat 处理，得到转写语料 (sports_corpus_en 目录)
+执行 modify_longmao_corpus.py 调整龙猫语料中的数字风格，保持和ASR模型一致
+导出aiui的 aiui_ist_sentence 表记录，执行 CorpusExtractor.java 抽取语料（得到 noised_football.txt 文件）
 执行 wiki_sports_asr_preprocess.py 将维基百科、运动语料标准化，并抽取字典 (std_sports_corpus_en 目录)
 执行 EnWordsNoiseGenerator.java 得到英文单词纠错集
 执行 short_dictionary_corrections.py 精简词表（先取字典的前6万个词，再看这6万个词讯飞误转词，一起加入词表）
 执行五遍 add_noise.py 给wiki语料添加不同噪声（运动语料经过ASR转写已经带有噪声了）
-执行 asr_files_split.py 将运动语料拆分为训练集、验证集、测试集
+执行 ftb_asr_files_split.py 将运动语料拆分为训练集、验证集、测试集
 执行 gen_hypo_ref_file.py 将wiki和运动语料分成 hypo* 和 ref* 文件。
-执行 align_cal_werdur_v2.py 对齐 hypo* 和 ref* 文件
+执行 align_cal_werdur_v2.py 对齐wiki和运动语料 hypo* 和 ref* 文件
 执行 split_wiki_train_valid_test.py 将wiki语料分为训练集、验证集、测试集
 执行下面命令，构造二进制化需要的数据文件：
     cp hypo_train_std_noised_corpus.txt.src.werdur.full train.zh_CN

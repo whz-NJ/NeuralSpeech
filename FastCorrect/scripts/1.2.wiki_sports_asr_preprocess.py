@@ -6,17 +6,23 @@ import preprocess
 
 # data_path = '../'
 # data_names = ['sports.txt']
-wiki_data_path = '/root/extracted/AA/'
+wiki_data_path = '/root/extracted/AA'
 wiki_data_names = ['zh_wiki_00', 'zh_wiki_01', 'zh_wiki_02']
-sports_asr_root_dir = "/root/sports_corpus3"
-MIN_RULE_TOKEN_COUNT = 10000
+std_wiki_data_root_dir = '/root/std_wiki'
 
-def replace_func(input_file, token_base_count = 0):
-    input_file_dir = os.path.dirname(input_file)
-    input_file_name = os.path.basename(input_file)
-    outfile = codecs.open(input_file_dir + '/std_' + input_file_name, 'w', 'utf-8')
+sports_asr_root_dir = "/root/sports_corpus_en2" #包含从aiui系统导出的语料 aiui_football.txt
+std_sports_asr_root_dir = "/root/std_sports_corpus_en2"
 
-    with codecs.open(input_file, 'r', 'utf-8') as myfile:
+# sports_asr_root_dir = r'C:\Code\NeuralSpeech\FastCorrect\test'
+# std_sports_asr_root_dir = r'C:\Code\NeuralSpeech\FastCorrect\test'
+
+def wiki_replace_func(input_file_path, output_file_dir):
+    input_file_name = os.path.basename(input_file_path)
+    if not os.path.isdir(output_file_dir):
+        os.makedirs(output_file_dir)
+    outfile = codecs.open(output_file_dir + '/std_' + input_file_name, 'w', 'utf-8')
+
+    with codecs.open(input_file_path, 'r', 'utf-8') as myfile:
         sentences = []
         for line in myfile:
             if r'<doc ' in line or r'</doc>' in line or r'<doc>' in line:
@@ -25,18 +31,10 @@ def replace_func(input_file, token_base_count = 0):
             line = line.replace('zh-cn:', '。')
             line = line.replace('zh-tw:', '。')
             line = line.replace('zh-hk:', '。')
+            line = line.replace('zh-hans:', '。')
+            line = line.replace('zh-hant:', '。')
             line = line.replace('zh-sg:', '。')
-            if token_base_count > 0:
-                for sentence in preprocess.normAndTokenize(line, split_sentences=True):
-                    sentences.append(sentence + "\n")
-                    for token in sentence.split():
-                        count = preprocess.tokens_count_dict.get(token, 0)
-                        if count >= token_base_count:
-                            continue
-                        # token一定要出现在词表中
-                        preprocess.tokens_count_dict[token] = token_base_count + count
-            else:
-                sentences.extend([sentence + '\n' for sentence in preprocess.normAndTokenize(line, split_sentences=True)])
+            sentences.extend([sentence + '\n' for sentence in preprocess.normAndTokenize(line, min_sentence_len=3, split_sentences=True)])
             if len(sentences) >= 10000:
                 outfile.writelines(sentences)
                 sentences = []
@@ -46,21 +44,70 @@ def replace_func(input_file, token_base_count = 0):
 
     outfile.close()
 
-def preprocess_sports_asr(root_dir):
+MIN_RULE_TOKEN_COUNT = 10000
+def asr_replace_func(input_file_path, output_file_dir):
+    input_file_name = os.path.basename(input_file_path)
+    if not os.path.isdir(output_file_dir):
+        os.makedirs(output_file_dir)
+    outfile = codecs.open(output_file_dir + '/std_' + input_file_name, 'w', 'utf-8')
+
+    with codecs.open(input_file_path, 'r', 'utf-8') as myfile:
+        sentences = []
+        for line in myfile:
+            if len(line) == 0 or line.isspace():
+                continue
+            fields = line.split('\t')
+            if len(fields) != 2:
+                continue
+            orig_sentence = fields[0]
+            hypo_sentence = fields[1]
+            if len(orig_sentence) == 0 or len(hypo_sentence) == 0:
+                continue
+            orig_sentences = preprocess.normAndTokenize(orig_sentence, min_sentence_len=2, split_sentences=True)
+            hypo_sentences = preprocess.normAndTokenize(hypo_sentence, min_sentence_len=2, split_sentences=True)
+            if len(orig_sentences) == 0 or len(hypo_sentences) == 0 or len(orig_sentences) != len(hypo_sentences):
+                continue
+
+            for orig_sentence, hypo_sentence in zip(orig_sentences, hypo_sentences):
+                sentences.append(orig_sentence + '\t' + hypo_sentence + '\n')
+                for token in orig_sentence.split():
+                    count = preprocess.tokens_count_dict.get(token, 0)
+                    if count >= MIN_RULE_TOKEN_COUNT:
+                        continue
+                    # token一定要出现在词表中
+                    preprocess.tokens_count_dict[token] = MIN_RULE_TOKEN_COUNT + count
+                for token in hypo_sentence.split():
+                    count = preprocess.tokens_count_dict.get(token, 0)
+                    if count >= MIN_RULE_TOKEN_COUNT:
+                        continue
+                    # token一定要出现在词表中
+                    preprocess.tokens_count_dict[token] = MIN_RULE_TOKEN_COUNT + count
+            if len(sentences) >= 10000:
+                outfile.writelines(sentences)
+                sentences = []
+        #文件扫描结束
+        if len(sentences) > 0:
+            outfile.writelines(sentences)
+
+    outfile.close()
+
+def preprocess_sports_asr(root_dir, input_base_dir, output_base_dir):
     for root,dirs,files in os.walk(root_dir):
         for file in files:
             if not file.endswith(".txt"):
                 continue
+            if file.startswith("std_"): #跳过输出文件
+                continue
             file_path = os.path.join(root, file)
-            replace_func(file_path, MIN_RULE_TOKEN_COUNT) #运动语料出现的词语必须出现
+            common_sub_dir = root.replace(input_base_dir, "").lstrip("/")
+            output_file_dir = os.path.join(output_base_dir, common_sub_dir)
+            asr_replace_func(file_path, output_file_dir) #运动语料出现的词语必须出现
             print(f"{file_path} has been processed.")
-        for dir in dirs:
-            preprocess_sports_asr(os.path.join(root, dir))
 
 def run():
     # 用强制纠错规则中的词初始化词表
-    correction_rule_files = [r'./scripts/force_correction_rules.txt',
-                             r'./scripts/hard_force_correction_rules.txt']
+    correction_rule_files = [r'/root/fastcorrect/scripts/std_force_correction_rules.txt',
+                             r'/root/fastcorrect/scripts/hard_force_correction_rules.txt']
     # correction_rule_files = [r'./force_correction_rules.txt',
     #                          r'./hard_force_correction_rules.txt']
     for correction_rule_file in correction_rule_files:
@@ -68,9 +115,9 @@ def run():
             for rule in infile:
                 fields = rule.split('\t')
                 orig_words = fields[0].strip()
-                orig_sentences = preprocess.normAndTokenize(orig_words, 1)
+                orig_sentences = preprocess.normAndTokenize(orig_words, min_sentence_len=1)
                 error_words = fields[1].strip()
-                error_sentences = preprocess.normAndTokenize(error_words, 1)
+                error_sentences = preprocess.normAndTokenize(error_words, min_sentence_len=1)
                 sentences = orig_sentences
                 sentences.extend(error_sentences)
                 tokens = []
@@ -89,16 +136,15 @@ def run():
                     preprocess.tokens_count_dict[tmp_token] = MIN_RULE_TOKEN_COUNT + count + 1
 
     #处理各运动项目ASR转写出的语料
-    preprocess_sports_asr(sports_asr_root_dir)
+    preprocess_sports_asr(sports_asr_root_dir, sports_asr_root_dir, std_sports_asr_root_dir)
 
     #处理各wiki文件
     for data_name in wiki_data_names:
-        replace_func(wiki_data_path + data_name)
+        wiki_replace_func(os.path.join(wiki_data_path, data_name), std_wiki_data_root_dir)
         print('{0} has been processed.'.format(data_name))
 
     #保存词表
-    MAX_TOKENS = 40000
-    with codecs.open(sports_asr_root_dir + '/dict.CN_char.txt', 'w', 'utf-8') as dictfile:
+    with codecs.open(os.path.join(std_sports_asr_root_dir, 'dict.CN_char.txt'), 'w', 'utf-8') as dictfile:
         sorted_token_counts = sorted(preprocess.tokens_count_dict.items(), key= lambda  x:x[1], reverse=True)
         tokens = []
         count = 0
@@ -108,13 +154,9 @@ def run():
                 dictfile.writelines(tokens)
                 tokens = []
             count += 1
-            if count >= MAX_TOKENS:
-                break
         if len(tokens) > 0:
             dictfile.writelines(tokens)
 
 
 if __name__ == '__main__':
     run()
-
-
