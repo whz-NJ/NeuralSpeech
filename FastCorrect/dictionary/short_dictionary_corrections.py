@@ -4,7 +4,7 @@ dict_file_path = "./dict.CN_char.txt"
 noised_english_file_path = "./noised_English.txt"
 short_dict_file_path = "./short.dict.CN_char.txt"
 short_noised_english_file_path = "./short_noised_English.txt" #丢弃不常见单词的英文纠错规则
-MAX_TOKENS = 60000 #后续预处理/训练/预测时，如果出现词表中未出现的词，直接丢弃
+MAX_TOKENS = 40000 #后续预处理/训练/预测时，如果出现词表中未出现的词，直接丢弃
 
 def Q2B(uchar):
     """全角转半角"""
@@ -27,9 +27,9 @@ with open(dict_file_path, 'r', encoding='utf-8') as infile:
         if tokens_num > MAX_TOKENS:
             break
         fields = line.split()
-        word = fields[0]
-        count = fields[1]
-        token_count_map[word] = count
+        word = fields[0].strip()
+        count = fields[1].strip()
+        token_count_map[word] = int(count)
 
 
 def split_tokens(line):
@@ -42,7 +42,6 @@ def split_tokens(line):
             if english.upper() != english:
                 tokens.append(english.lower())
                 if not token_count_map.__contains__(english.lower()):
-                    print("unknown english word: " + english.lower())
                     unknown_english_word_count_map[english.lower()] = \
                         unknown_english_word_count_map.get(english.lower(), 0) + 1
             else:
@@ -50,7 +49,6 @@ def split_tokens(line):
                 if not token_count_map.__contains__(english.upper()):
                     unknown_english_word_count_map[english.upper()] = \
                         unknown_english_word_count_map.get(english.upper(), 0) + 1
-                    print("unknown english word: " + english.upper())
             english = ""
     for ch in line:
         if '\u4e00' <= ch <= '\u9fa5': #汉字
@@ -64,8 +62,11 @@ def split_tokens(line):
             add_english()
         else:
             add_english()
+    add_english()
     return tokens
 
+# print(split_tokens("legs."))
+# print(split_tokens("take so."))
 
 short_token_corrections_rules = {}
 with open(noised_english_file_path, 'r', encoding='utf-8') as infile:
@@ -84,8 +85,7 @@ with open(noised_english_file_path, 'r', encoding='utf-8') as infile:
 
 short_dict_file = codecs.open(short_dict_file_path, 'w', 'utf-8')
 token_count_map.update(unknown_english_word_count_map)
-for token in token_count_map.keys():
-    count = token_count_map[token]
+for token,count in sorted(token_count_map.items(), key=lambda x:x[1], reverse = True):
     short_dict_file.write(token + " " + str(count) + "\n")
 short_dict_file.close()
 

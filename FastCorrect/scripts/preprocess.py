@@ -147,7 +147,6 @@ def my_cn2an(cnDigitsStr):
 #拆成独立发音的 tokens
 def normAndTokenize(line, min_sentence_len=2, split_sentences=False):
     sentences = []
-    is_time = False
     def append_english_digits(append_english=False, append_digits=False, append_cn_digits=False, cn_to_an = False):
         nonlocal tokens, english, digits, cn_digits
         if append_english and len(english) > 0:
@@ -258,51 +257,12 @@ def normAndTokenize(line, min_sentence_len=2, split_sentences=False):
             if len(tokens) >= min_sentence_len: # 分句且当前句子token数满足要求
                 sentences.append(" ".join(tokens)) # 每个token中间用空格分隔
             tokens = []
-            is_time = False
         elif '0' <= ch <= '9': #数字
             append_english_digits(append_english=True, append_cn_digits=True) #如果有中文数字，保持原样，不转换为阿拉伯数字
             digits += ch
         # '%@.:+-=/\'×÷~&':
         elif kept_char_map.__contains__(ch): #需要保留的符号
-            if ch == ':': #TODO 之前词典没有 冒号，这里需要把冒号转换为 汉字
-                if digits.find('.') == -1 and 1 <= len(digits) and int(digits) < 24 and '0' <= next_ch <= '9': #前面一个数字是整数，且小于24
-                    if idx < len(line) - 2:
-                        next_next_ch = Q2B(line[idx + 2])
-                        if idx < len(line) - 3:
-                            next_next_next_ch = Q2B(line[idx + 3])
-                        else:
-                            next_next_next_ch = ''
-                    else:
-                        next_next_ch = ""
-                        next_next_next_ch = ""
-                    if is_time:
-                        next_digit = -1
-                        # 冒号后面2个字符都是数字
-                        if '0' <= next_next_ch <= '9' and (next_next_next_ch == '' or '0' > next_next_next_ch or next_next_next_ch > '9'):
-                            next_digit = int('' + next_ch + next_next_ch)
-                        #冒号后面有1个字符是数字
-                        elif '0' > next_next_ch or next_next_ch > '9':
-                            next_digit = int('' + next_ch)
-                        if next_digit != -1:
-                            append_english_digits(True, True, True)
-                            tokens.append('点')
-                        else:
-                            append_english_digits(True, True, True)
-                            tokens.append('比')
-                    else:
-                        append_english_digits(True, True, True)
-                        tokens.append('比')
-                else:
-                    append_english_digits(True, True, True)
-                    if not split_sentences:  # 不分句（处理ASR输出或强制纠错规则时）
-                        prev_ch = ch
-                        idx = idx + 1  # 丢弃，跳到下一个字符
-                        continue
-                    if len(tokens) >= min_sentence_len:  # 分句且当前句子token数满足要求
-                        sentences.append(" ".join(tokens))  # 每个token中间用空格分隔
-                    tokens = []
-                    is_time = False
-            elif(ch != '.') or not (('0' <= prev_ch <= '9') or ('0' <= next_ch <= '9')):
+            if(ch != '.') or not (('0' <= prev_ch <= '9') or ('0' <= next_ch <= '9')):
                 append_english_digits(True, True, True) #如果有中文数字，保持原样，不转换为阿拉伯数字
                 tokens.append(ch) # 不在数字中间的点作为独立的 token
                 tokens_count_dict[ch] = tokens_count_dict.get(ch, 0) + 1
@@ -310,8 +270,6 @@ def normAndTokenize(line, min_sentence_len=2, split_sentences=False):
                 append_english_digits(append_english=True, append_cn_digits=True) #如果有中文数字，保持原样，不转换为阿拉伯数字
                 digits += ch # 阿拉伯数字中的点号
         elif '\u4e00' <= ch <= '\u9fa5': #汉字
-            if prev_ch == '时' and ch == '间':
-                is_time = True
             if ch != '分' and not cn_digit_map.__contains__(ch):
                 append_english_digits(True, True, True) # 当前汉字为普通的汉字。前面如果有中文数字，保持原样，不转换为阿拉伯数字
                 tokens.append(ch)
@@ -506,17 +464,19 @@ def main():
     # print(normAndTokenize("\u597d\u6c42"))
     # print(normAndTokenize("好求，乌拉归进求啦！"))
     # print(normAndTokenize("二点三零点四"))
-    print(normAndTokenize("他说:30分钟了", split_sentences=False))
-    print(normAndTokenize("现在时间是9:20，开始9:30", split_sentences=True))
-    print(normAndTokenize("现在时间是9:20，开始时间9:30", split_sentences=True))
-    print(normAndTokenize("9:20"))
-    print(normAndTokenize("现在比分是9:20"))
-    print(normAndTokenize("职业生涯CBA的第3场比赛"))
-    print(normAndTokenize("21.34"))
+    # print(normAndTokenize("就是正在为你书看呢2:8，克罗斯世界杯A组第3轮的比赛", split_sentences=False))
+    # print(normAndTokenize("现在时间是9:20，开始9:30", split_sentences=True))
+    # print(normAndTokenize("现在时间是9:20，开始时间9:30", split_sentences=True))
+    # print(normAndTokenize("9:20"))
+    # print(normAndTokenize("现在比分是9:20"))
+    # print(normAndTokenize("职业生涯CBA的第3场比赛"))
+    # print(normAndTokenize("21.34"))
     print(normAndTokenize("现 在 C B A 赛 事 转 播"))
-    print(normAndTokenize("现在CBA赛事转播"))
-
-    print(normAndTokenize("版本号是V二点三零点四"))
+    # print(normAndTokenize("现在CBA赛事转播"))
+    print(normAndTokenize("比例是百分之三十点三"))
+    print(normAndTokenize('我们1/23的人abc30%的概率，59.2÷37=32.5-35.3=0')[0])
+    #
+    # print(normAndTokenize("版本号是V二点三零点四"))
     # print(normAndTokenize("版本号是V二点三零点四"))
     # print(normAndTokenize("百分之七十六七十九点八啊"))
     # print(normAndTokenize("百分之七十六九"))
@@ -532,8 +492,8 @@ def main():
     # print(normAndTokenize("今天温度三十摄氏度=30°c，好热", split_sentences=True))
     # print(normAndTokenize("域名是migu.cn或咪咕点。Cn", split_sentences=True))
     # print(normAndTokenize("登陆咪咕 + 木鸡结算系统"))
-    print(normAndTokenize("log佛j单身dog.v23.ab"))
-    print(normAndTokenize("ocean log佛j单身dog.v23.ab"))
+    # print(normAndTokenize("log佛j单身dog.v23.ab"))
+    # print(normAndTokenize("ocean log佛j单身dog.v23.ab"))
     # print(normAndTokenize("hello，今天是周万军的生日"))
 
     # print(normAndTokenize4Ch('1034.5秒')[0])

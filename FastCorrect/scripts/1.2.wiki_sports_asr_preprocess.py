@@ -34,7 +34,7 @@ def wiki_replace_func(input_file_path, output_file_dir):
             line = line.replace('zh-hans:', '。')
             line = line.replace('zh-hant:', '。')
             line = line.replace('zh-sg:', '。')
-            sentences.extend([sentence + '\n' for sentence in preprocess.normAndTokenize(line, min_sentence_len=3, split_sentences=True)])
+            sentences.extend([sentence + '\n' for sentence in preprocess.normAndTokenize(line, min_sentence_len=2, split_sentences=True)])
             if len(sentences) >= 10000:
                 outfile.writelines(sentences)
                 sentences = []

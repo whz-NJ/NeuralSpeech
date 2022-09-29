@@ -14,7 +14,8 @@ import preprocess
 random_seed = 5
 random.seed(random_seed)
 np.random.seed(random_seed)
-input_file_dir = '../extracted/AA/'
+#input_file_dir = '/root/extracted/AA/'
+input_file_dir = '/root/std_wiki'
 input_file_names = [r'std_zh_wiki_00', r'std_zh_wiki_01', r'std_zh_wiki_02'] #output of wiki_preprocess.py
 dict_file_path = "../dictionary/short.dict.CN_char.txt"
 noise_ratio = 0.15
@@ -255,7 +256,7 @@ def noise_sentence(sentence):
 import time
 begin_time = time.time()
 for input_file_name in input_file_names:
-    input_file_path = input_file_dir + input_file_name
+    input_file_path = os.path.join(input_file_dir, input_file_name)
     with open(input_file_path, 'r', encoding='utf-8') as infile:
         output_file_path = input_file_dir + "/noised" + str(random_seed) + "_" + input_file_name
         with open(output_file_path, 'w', encoding='utf-8') as outfile:
@@ -266,7 +267,7 @@ for input_file_name in input_file_names:
                 line = line.strip()
                 if not line:
                     continue
-                sentences = preprocess.normAndTokenize(line, 3, True)
+                sentences = preprocess.normAndTokenize(line, 2, True)
                 for sentence in sentences:
                     new_tokens = noise_sentence(sentence)
                     if len(new_tokens) > 0: # 一句处理完成（一行有多句）
