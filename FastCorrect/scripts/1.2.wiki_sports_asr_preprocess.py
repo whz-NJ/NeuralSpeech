@@ -10,11 +10,11 @@ wiki_data_path = '/root/extracted/AA'
 wiki_data_names = ['zh_wiki_00', 'zh_wiki_01', 'zh_wiki_02']
 std_wiki_data_root_dir = '/root/std_wiki'
 
-sports_asr_root_dir = "/root/sports_corpus_en2" #包含从aiui系统导出的语料 aiui_football.txt
-std_sports_asr_root_dir = "/root/std_sports_corpus_en2"
+# sports_asr_root_dir = "/root/sports_corpus_en3" #包含从aiui系统导出的语料 aiui_football.txt
+# std_sports_asr_root_dir = "/root/std_sports_corpus_en3"
 
-# sports_asr_root_dir = r'C:\Code\NeuralSpeech\FastCorrect\test'
-# std_sports_asr_root_dir = r'C:\Code\NeuralSpeech\FastCorrect\test'
+sports_asr_root_dir = r'C:\Code\NeuralSpeech\FastCorrect\sport_corpus_en3'
+std_sports_asr_root_dir = r'C:\Code\NeuralSpeech\FastCorrect\std_sport_corpus_en3'
 
 def wiki_replace_func(input_file_path, output_file_dir):
     input_file_name = os.path.basename(input_file_path)
@@ -34,7 +34,7 @@ def wiki_replace_func(input_file_path, output_file_dir):
             line = line.replace('zh-hans:', '。')
             line = line.replace('zh-hant:', '。')
             line = line.replace('zh-sg:', '。')
-            sentences.extend([sentence + '\n' for sentence in preprocess.normAndTokenize(line, min_sentence_len=2, split_sentences=True)])
+            sentences.extend([sentence + '\n' for sentence in preprocess.normAndTokenize(line, min_sentence_len=2, split_sentences=True, for_wiki=True)])
             if len(sentences) >= 10000:
                 outfile.writelines(sentences)
                 sentences = []
@@ -63,8 +63,9 @@ def asr_replace_func(input_file_path, output_file_dir):
             hypo_sentence = fields[1]
             if len(orig_sentence) == 0 or len(hypo_sentence) == 0:
                 continue
-            orig_sentences = preprocess.normAndTokenize(orig_sentence, min_sentence_len=2, split_sentences=True)
-            hypo_sentences = preprocess.normAndTokenize(hypo_sentence, min_sentence_len=2, split_sentences=True)
+            # 不分句，这样正确语料才能包含，,、尽可能展示转写过程可能的正确语句
+            orig_sentences = preprocess.normAndTokenize(orig_sentence, min_sentence_len=2, split_sentences=False, for_wiki=False)
+            hypo_sentences = preprocess.normAndTokenize(hypo_sentence, min_sentence_len=2, split_sentences=False, for_wiki=False)
             if len(orig_sentences) == 0 or len(hypo_sentences) == 0 or len(orig_sentences) != len(hypo_sentences):
                 continue
 
@@ -106,18 +107,18 @@ def preprocess_sports_asr(root_dir, input_base_dir, output_base_dir):
 
 def run():
     # 用强制纠错规则中的词初始化词表
-    correction_rule_files = [r'/root/fastcorrect/scripts/std_force_correction_rules.txt',
-                             r'/root/fastcorrect/scripts/hard_force_correction_rules.txt']
-    # correction_rule_files = [r'./force_correction_rules.txt',
-    #                          r'./hard_force_correction_rules.txt']
+    # correction_rule_files = [r'/root/fastcorrect/scripts/std_force_correction_rules.txt',
+    #                          r'/root/fastcorrect/scripts/hard_force_correction_rules.txt']
+    correction_rule_files = [r'./force_correction_rules.txt',
+                             r'./hard_force_correction_rules.txt']
     for correction_rule_file in correction_rule_files:
         with open(correction_rule_file, 'r', encoding='utf-8') as infile:
             for rule in infile:
                 fields = rule.split('\t')
                 orig_words = fields[0].strip()
-                orig_sentences = preprocess.normAndTokenize(orig_words, min_sentence_len=1)
+                orig_sentences = preprocess.normAndTokenize(orig_words, min_sentence_len=1, for_wiki=False)
                 error_words = fields[1].strip()
-                error_sentences = preprocess.normAndTokenize(error_words, min_sentence_len=1)
+                error_sentences = preprocess.normAndTokenize(error_words, min_sentence_len=1, for_wiki=False)
                 sentences = orig_sentences
                 sentences.extend(error_sentences)
                 tokens = []
@@ -139,9 +140,9 @@ def run():
     preprocess_sports_asr(sports_asr_root_dir, sports_asr_root_dir, std_sports_asr_root_dir)
 
     #处理各wiki文件
-    for data_name in wiki_data_names:
-        wiki_replace_func(os.path.join(wiki_data_path, data_name), std_wiki_data_root_dir)
-        print('{0} has been processed.'.format(data_name))
+    # for data_name in wiki_data_names:
+    #     wiki_replace_func(os.path.join(wiki_data_path, data_name), std_wiki_data_root_dir)
+    #     print('{0} has been processed.'.format(data_name))
 
     #保存词表
     with codecs.open(os.path.join(std_sports_asr_root_dir, 'dict.CN_char.txt'), 'w', 'utf-8') as dictfile:
@@ -160,3 +161,4 @@ def run():
 
 if __name__ == '__main__':
     run()
+

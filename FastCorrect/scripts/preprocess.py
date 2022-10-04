@@ -49,35 +49,19 @@ def my_an2cn(digitsStr):
         return str_to_digits(digitsStr)
     return cn2an.an2cn(digitsStr, 'low')
 
-seperator_map = {}
-for ch in r'<>?,，。！？;；()（）[]【】{}、《》「」—':
-    seperator_map[ch] = ch
-kept_char_map = {}
-for ch in r'%@.:+-=/×÷~&': #虽然英文里有'这里也不要了，后面实际纠错时也调用preprocess，删除不要的符号
-    kept_char_map[ch] = ch
+asr_seperator_map = {}
+for ch in r'<>?。！？;；()（）[]【】{}《》「」—,，':
+    asr_seperator_map[ch] = ch
+asr_kept_char_map = {}
+for ch in r"%@.:+-=/×÷~&、:·'": #其中 %:,，、：·' 没有 unify_pining
+    asr_kept_char_map[ch] = ch
 
-char_digits_pattern = re.compile(r'^([0-9.]*)([a-zA-Z]+)([0-9.]*)([a-zA-Z]*)([0-9.]*)$')
-def split_english_digits(english_digits):
-    tokens = []
-    matched_result = char_digits_pattern.match(english_digits)
-    if matched_result:
-        digits1 = matched_result.group(1)
-        english_word1 = matched_result.group(2)
-        digits2 = matched_result.group(3)
-        english_word2 = matched_result.group(4)
-        digits3 = matched_result.group(5)
-        if digits1:
-            tokens.append(my_an2cn(digits1))
-        tokens.append(english_word1)
-        if digits2:
-            tokens.append(my_an2cn(digits2))
-        if english_word2:
-            tokens.append(english_word2)
-        if digits3:
-            tokens.append(my_an2cn(digits3))
-    else:
-        tokens.append(english_digits)
-    return tokens
+wiki_seperator_map = {}
+for ch in r'<>?。！？;；()（）[]【】{}《》「」—，,':
+    wiki_seperator_map[ch] = ch
+wiki_kept_char_map = {}
+for ch in r"%@.:+-=/×÷~&、:·'": #其中 %:,，、：·' 没有 unify_pining
+    wiki_kept_char_map[ch] = ch
 
 def Q2B(uchar):
     """全角转半角"""
@@ -134,7 +118,7 @@ def my_cn2an(cnDigitsStr):
             if len(cnDigit) > 1 or (cnDigit != '十' and cnDigit != '百' and cnDigit != '千' and cnDigit != '万' and cnDigit != '亿'):
                 try:
                     result += str(cn2an.cn2an(cnDigit, mode='smart')) + "."
-                except:
+                except: #可能是两串中文数字连在一起导致
                     return ""
             else:#十分之 百分之 千分之 万分之 亿分之 中的 十/百/千/万/亿
                 result += str(cn2an.cn2an('一' + cnDigit, mode='smart')) + "."
@@ -144,8 +128,97 @@ def my_cn2an(cnDigitsStr):
         result = '.' + result
     return result
 
+def extract_cn_digits(line, tokens, start_index=0, cn_to_an = False, debug=False):
+    digits_count = 0
+    cn_digits = ""
+    an_digits = ""
+    idx = start_index
+    if idx == len(line):
+        return -1
+    ch = Q2B(line[idx])
+    if ch == '负':
+        cn_digits += ch
+        idx += 1
+        digits_count += 1
+    elif ch == '正':
+        if cn_to_an:
+            an_digits = "+" #因为cn2an不支持 '正三十五' 这种格式字符串，所以这里手工将'正'变成'+'
+        else:
+            cn_digits += ch
+        idx += 1
+        digits_count += 1
+
+    while idx < len(line):
+        ch = Q2B(line[idx])
+        if cn_digit_map.__contains__(ch):
+            cn_digits += ch
+            digits_count += 1
+            idx += 1
+        else:
+            break
+    ending_ch = ""
+    if idx < len(line):
+        ending_ch = Q2B(line[idx])
+        if ending_ch == '几': #中文数字后面跟有概数
+            return -1 # 不应该把中文概数数字转换为阿拉伯数字
+
+    if not cn_to_an:
+        if ending_ch == '多':
+            # 因为cn_to_an为false，不需要调用cn2an模块，可以直接在后面加cn2an不支持的'多'
+            cn_digits += '多'
+            digits_count += 1
+        for digit in cn_digits:
+            tokens.append(digit)
+            tokens_count_dict[digit] = tokens_count_dict.get(digit, 0) + 1
+    else:
+        mid_an_digits = my_cn2an(cn_digits)
+        if not mid_an_digits or len(mid_an_digits) == 0:
+            return -1 #可能是两个中文数字连在一起，不应该把它们转换为阿拉伯数字
+        an_digits += mid_an_digits
+        for digit in an_digits:
+            tokens.append(digit)
+            tokens_count_dict[digit] = tokens_count_dict.get(digit, 0) + 1
+            digits_count += 1
+        if ending_ch == '多':
+            tokens.append('+')
+            tokens_count_dict['+'] = tokens_count_dict.get('+', 0) + 1
+            digits_count += 1
+    if debug:
+        print(tokens)
+    return digits_count
+
+# test_digits = extract_cn_digits("五十三",[])
+# test_digits = extract_cn_digits("五十几",[])
+# test_digits = extract_cn_digits("五十多",[])
+# test_digits = extract_cn_digits("正五十三",[])
+# test_digits = extract_cn_digits("正五十三点多",[])
+# test_digits = extract_cn_digits("正五十几",[])
+# test_digits = extract_cn_digits("正五十多",[])
+# test_digits = extract_cn_digits("负五十三",[])
+# test_digits = extract_cn_digits("负五十三点多",[])
+# test_digits = extract_cn_digits("负五十几",[])
+# test_digits = extract_cn_digits("负五十多",[])
+# test_digits = extract_cn_digits("五十三",[],0,True)
+# test_digits = extract_cn_digits("五十几",[],0,True)
+# test_digits = extract_cn_digits("五十多",[],0,True)
+# test_digits = extract_cn_digits("正五十三",[],0,True)
+# test_digits = extract_cn_digits("正五十三点多",[],0,True)
+# test_digits = extract_cn_digits("正五十几",[],0,True)
+# test_digits = extract_cn_digits("正五十多",[],0,True)
+# test_digits = extract_cn_digits("负五十三",[],0,True)
+# test_digits = extract_cn_digits("负五十三点多",[],0,True)
+# test_digits = extract_cn_digits("负五十几",[],0,True)
+# test_digits = extract_cn_digits("负五十多",[],0,True)
+
 #拆成独立发音的 tokens
-def normAndTokenize(line, min_sentence_len=2, split_sentences=False):
+def normAndTokenize(line, min_sentence_len=2, split_sentences=False, for_wiki = False):
+    seperator_map = wiki_seperator_map
+    if not for_wiki:
+        seperator_map = asr_seperator_map
+    kept_char_map = wiki_kept_char_map
+    if not for_wiki:
+        kept_char_map = asr_kept_char_map
+
     sentences = []
     def append_english_digits(append_english=False, append_digits=False, append_cn_digits=False, cn_to_an = False):
         nonlocal tokens, english, digits, cn_digits
@@ -175,36 +248,6 @@ def normAndTokenize(line, min_sentence_len=2, split_sentences=False):
             cn_digits = ''
 
         return True
-
-    def extract_cn_digits(line, start_index, cn_to_an = False):
-        digits_count = 0
-        nonlocal tokens
-        cn_digits = ""
-        idx = start_index
-        while idx < len(line):
-            ch = Q2B(line[idx])
-            if cn_digit_map.__contains__(ch):
-                cn_digits += ch
-                digits_count += 1
-                idx += 1
-            else:
-                break
-        if idx < len(line):
-            ch = Q2B(line[idx])
-            if ch == '几' or ch == '多': #中文数字后面跟有概数
-                return -1 # 不应该把中文概数数字转换为阿拉伯数字
-        if not cn_to_an:
-            for digit in cn_digits:
-                tokens.append(digit)
-                tokens_count_dict[digit] = tokens_count_dict.get(digit, 0) + 1
-        else:
-            an_digits = my_cn2an(cn_digits)
-            if not an_digits or len(an_digits) == 0:
-                return -1 #可能是两个中文数字连在一起，不应该把它们转换为阿拉伯数字
-            for digit in an_digits:
-                tokens.append(digit)
-                tokens_count_dict[digit] = tokens_count_dict.get(digit, 0) + 1
-        return digits_count
 
     tokens = []
     english = ''
@@ -279,7 +322,7 @@ def normAndTokenize(line, min_sentence_len=2, split_sentences=False):
                     if cn_digit_map.__contains__(prev_ch):
                         # 中文读比例数字时，分子在后面读，而阿拉伯数字表示比例，分子在前面
                         # 这里先提取阿拉伯数字表示法中需要的分子
-                        digits_num = extract_cn_digits(line, idx + 2, True)
+                        digits_num = extract_cn_digits(line, tokens, idx + 2, True, False)
                         if digits_num == -1: #遇到了中文概数，此时不应该转换为阿拉伯数字
                             append_english_digits(True, True, True)  # 中文数字保持原样，不转换为阿拉伯数字
                             tokens.append(ch)
@@ -322,6 +365,20 @@ def normAndTokenize(line, min_sentence_len=2, split_sentences=False):
     if len(tokens) >= min_sentence_len:  # 分句且当前句子token数满足要求
         sentences.append(" ".join(tokens))
     return sentences
+
+# print(normAndTokenize("比例是百分之三十点三"))
+# print(normAndTokenize("比例是五分之三"))
+# print(normAndTokenize("比分是五十三比三十七"))
+# print(normAndTokenize("三七二十一"))
+# print(normAndTokenize("获奖ocean项目"))
+# print(normAndTokenize("获奖sen eye v1.2.3项目"))
+# print(normAndTokenize("算式:3*7=21"))
+# print(normAndTokenize("就这:现场报道，你好。下面开始",split_sentences=True))
+# print(normAndTokenize("卡尔·恩·马尔",split_sentences=True))
+# print(normAndTokenize("Opec's"))
+# print(normAndTokenize("现 在 C B A 赛 事 转 播"))
+# print(normAndTokenize("比例是百分之三十点三"))
+# print(normAndTokenize('我们1/23的人abc30%的概率，59.2÷37=32.5-35.3=0')[0])
 
 # '%@.:+-=/×÷~&'
 punctMap = {}

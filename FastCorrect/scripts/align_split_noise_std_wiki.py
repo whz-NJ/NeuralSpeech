@@ -13,7 +13,7 @@ import codecs
 
 split_rate = [0.9, 0.05, 0.05]
 #random_seed = int(sys.argv[1])
-random_seed = 1
+random_seed = 7
 random.seed(random_seed)
 np.random.seed(random_seed)
 #input_file_dir = '/root/extracted/AA/'
@@ -161,6 +161,34 @@ prob_op2 = [4/5, 2/25, 2/25, 1/25]
 all_op3 = [SUB, INS_L, INS_R] #有三个连续token都匹配，就不认为应该删除
 prob_op3 = [2/3, 1/6, 1/6]
 
+def set_werdurs_for_add_token(werdurs, matched_werdur):
+    if len(werdurs) > 0:
+        if werdurs[-1] >= 2:  # 之前hypo里没有token
+            if matched_werdur[0] == 1:
+                werdurs[-1] = -1 * werdurs[-1]  # 目前为止错误token数(包括当前tokens中的第一个token)
+            elif matched_werdur[0] == 0:
+                werdurs[-1] = -1 * (werdurs[-1] - 1)
+            else:  # 当前替换的tokens第一个也是错误的token
+                werdurs[-1] = matched_werdur[0] - werdurs[-1] + 1
+            werdurs.extend(matched_werdur[1:])
+        else:
+            werdurs.extend(matched_werdur)
+    else:
+        werdurs.extend(matched_werdur)
+
+def set_werdurs_for_delete_token(werdurs):
+    if len(werdurs) > 0:
+        if werdurs[-1] == 1:  # 之前hypo里有token
+            werdurs[-1] = -2
+        elif werdurs[-1] == 0:  # 之前hypo中多出一个错误token，本次丢弃ref的冒号，两个操作连在一起，就是替换
+            werdurs[-1] = -1
+        elif werdurs[-1] < 0:  # 之前hypo里有些错误token
+            werdurs[-1] -= 1
+        else:  # 之前hypo里没有token
+            werdurs[-1] += 1  # 相对hypo第一个token前,ref中需要删除的token数+1
+    else:
+        werdurs.append(2)  # 记录相对hypo第一个token前,ref中需要删除的token数+1
+
 def add_tokens_noise(token, op, werdurs, candidates):
     if op == SUB:
         if candidates is None:
@@ -171,7 +199,6 @@ def add_tokens_noise(token, op, werdurs, candidates):
             cfg_idx = 0
             prob_candidate = []
             priority_sum = 0
-            max_char_pos_logit = char_pos_logit[0]
             # 考虑纠错词长度，如果相同，并且纠错词长度为1，则考虑纠错配置出现顺序（先配置的优先考虑），
             # 如果长度相同，并且都大于1，则各个词机会均等
             # 如果长度不同，优先考虑长度长的纠错词，所有长词匹配比例是单词匹配概率的两倍
@@ -197,37 +224,18 @@ def add_tokens_noise(token, op, werdurs, candidates):
                     prob_candidate.append(priority)
             prob_candidate = [p/priority_sum for p in prob_candidate]
             matched_info = np.random.choice(candidates, p = prob_candidate)
-            if len(werdurs) > 0:
-                if werdurs[-1] >= 2:  # 之前hypo里没有token
-                    if matched_info.werdur[0] == 1:
-                        matched_info.werdur[0] = -1 * werdurs[-1] #目前为止错误token数(包括当前toekes中的第一个token)
-                    elif matched_info.werdur[0] == 0:
-                        matched_info.werdur[0] = -1 * (werdurs[-1] - 1)
-                    else: #当前替换的tokens第一个也是错误的token
-                        matched_info.werdur[0] = matched_info.werdur[0] - werdurs[-1] + 1
-                    werdurs.clear() # 需要用替换的tokens的werduer完全替换
-            werdurs.extend(matched_info.werdur)
+            set_werdurs_for_add_token(werdurs, matched_info.werdur) #这里不能直接修改 matched_info，它是浅拷贝!!!
             return matched_info.matched_tokens_num, matched_info.sim_words
     # 如何区分hypo中 DEL 空字符(用 werdur>=2表示) 和 待删除的错误字符(werdur=0)???
     elif op == DEL:
-        if len(werdurs) > 0:
-            if werdurs[-1] == 1: #之前hypo里有个正确的token
-                werdurs[-1] = -2
-            elif werdurs[-1] == 0: #之前hypo里有个额外的token，本次把ref新增token删除，相当于把hypo中额外token替换为从ref中删除的，所以为-1
-                werdurs[-1] = -1
-            elif werdurs[-1] < 0: #之前hypo里有个错误token
-                werdurs[-1] -= 1
-            else: #之前hypo里没有token
-                werdurs[-1] += 1 #相对hypo第一个token前,ref中需要删除的token数+1
-        else:
-            werdurs.append(2) #记录相对hypo第一个token前,ref中需要删除的token数+1
+        set_werdurs_for_delete_token(werdurs)
         return 1, []
     elif op == INS_L:
         random_token = np.random.choice(vocab_1char)
         if len(werdurs) > 0:
             if werdurs[-1] >= 2: #当前token是hypo中的第一个token，并且它是个需要删除的random_token,
                                  # 之前ref中还有些token,未出现在hypo中
-                werdurs[-1] = (-1* werdurs[-1])
+                werdurs[-1] = (-1 * werdurs[-1])
                 werdurs.append(1) #追加一个正确的token
             else: #当前token不是hypo中的第一个token，当前token是个需要删除的random_token
                 werdurs.extend([0, 1])
@@ -239,7 +247,7 @@ def add_tokens_noise(token, op, werdurs, candidates):
         if len(werdurs) > 0:
             if werdurs[-1] >= 2: #当前token是hypo中的第一个token，并且它是个正确的token,
                                  # 之前ref中还有些token,未出现在hypo中
-                werdurs[-1] = (-1* werdurs[-1])
+                werdurs[-1] = (-1 * werdurs[-1])
                 werdurs.append(0) #追加一个random_token
             else: #当前token不是hypo中的第一个token，并且是正确的
                 werdurs.extend([1, 0])
@@ -249,8 +257,10 @@ def add_tokens_noise(token, op, werdurs, candidates):
     else:
         raise ValueError("impossible op {}!".format(op))
 
+
 time_sim_chars = ['时', '是', '事', '四', '十', '分', '份', '封', '疯']
 bi_sim_chars = ['比', '笔', '毕', '逼', '币', '必', '闭']
+dot_sim_chars = ['点', '电', '店', '段', '限', '典', '蛋', '垫', '歉', '廉', '辨', '吊', '颠', '淀', '殿']
 def noise_sentence(sentence):
     new_tokens = []
     werdurs = []
@@ -271,17 +281,7 @@ def noise_sentence(sentence):
                 # 给汉字后面的冒号/句末的冒号/不是两个数字中间的冒号加噪声，只可能是删除该冒号
                 if prev_tok == "" or ('\u4e00' <= prev_tok <= '\u9fa5' or prev_tok < '0' or prev_tok > '9') \
                         or i == (tokens_num -1) or (tokens[i+1] < '0' or tokens[i+1] > '9'):
-                    if len(werdurs) > 0:
-                        if werdurs[-1] == 1:  # 之前hypo里有token
-                            werdurs[-1] = -2
-                        elif werdurs[-1] == 0: #之前hypo中多出一个错误token，本次丢弃ref的冒号，两个操作连在一起，就是替换
-                            werdurs[-1] = -1
-                        elif werdurs[-1] < 0:  # 之前hypo里有些错误token
-                            werdurs[-1] -= 1
-                        else:  # 之前hypo里没有token
-                            werdurs[-1] += 1  # 相对hypo第一个token前,ref中需要删除的token数+1
-                    else:
-                        werdurs.append(2)  # 记录相对hypo第一个token前,ref中需要删除的token数+1
+                    set_werdurs_for_delete_token(werdurs)
                     i += 1
                     prev_tok = tok
                     continue
@@ -295,6 +295,34 @@ def noise_sentence(sentence):
                 i += 1
                 continue
 
+            if tok == ".":
+                # 给汉字后面的点号/句末的点号/不是两个数字中间的点号加噪声，只可能是删除该冒号
+                if prev_tok == "" or ('\u4e00' <= prev_tok <= '\u9fa5' or prev_tok < '0' or prev_tok > '9') \
+                        or i == (tokens_num -1) or (tokens[i+1] < '0' or tokens[i+1] > '9'):
+                    set_werdurs_for_delete_token(werdurs)
+                    i += 1
+                    prev_tok = tok
+                    continue
+                sim_token = np.random.choice(dot_sim_chars)
+                new_tokens.append(sim_token)
+                werdurs.append(-1)
+                prev_tok = tok
+                i += 1
+                continue
+            if tok == "、" or tok == '·' or tok == "'" or tok == "：":
+                #这些字符噪声只有删除
+                set_werdurs_for_delete_token(werdurs)
+                i += 1
+                prev_tok = tok
+                continue
+            if tok in preprocess.wiki_kept_char_map:
+                candidates = trie_dict.get_pairs(tokens[i : i+1])
+                matched_info = np.random.choice(candidates)
+                set_werdurs_for_add_token(werdurs, matched_info.werdur)
+                new_tokens.extend(matched_info.sim_words)
+                prev_tok = tok
+                i += matched_info.matched_tokens_num
+                continue
             matched_info = trie_dict.get_pairs(tokens[i:])
             if len(matched_info) > 0:
                 if matched_info[-1].matched_tokens_num > 2:
@@ -316,36 +344,42 @@ def noise_sentence(sentence):
                 prev_tok = tok
                 i += matched_tokens_num
                 continue
+
+        if len(werdurs) > 0 and werdurs[-1] >= 2: #之前hypo中没有token(ref中的token都被DEL了)
+            werdurs[-1] = -1 * (werdurs[-1])
+        else:
+            werdurs.append(1)
         new_tokens.append(tok) #不加噪声
-        werdurs.append(1)
         if prev_tok == '时' and tok == '间':
             is_time = True
         prev_tok = tok
         i += 1
     return werdurs, new_tokens
 
+print(noise_sentence("马 丁 、 富 勒 讲 话 2 . 0 : 冲 啊 ."))
+print(noise_sentence("3 × 五 = 六"))
 # tokens = noise_sentence(preprocess.normAndTokenize("欢迎来到咪咕体育", 3, True)[0])
 # print(noise_sentence(preprocess.normAndTokenize("欢迎参加miguday", 3, True)[0]))
 
 import time
 begin_time = time.time()
+output_train_hypo_file_path = os.path.join(input_file_dir, f"hypo_train_std_noised{random_seed}_corpus.full")
+output_train_ref_file_path = os.path.join(input_file_dir, f"ref_train_std_noised{random_seed}_corpus.tgt")
+output_valid_hypo_file_path = os.path.join(input_file_dir, f"hypo_valid_std_noised{random_seed}_corpus.full")
+output_valid_ref_file_path = os.path.join(input_file_dir, f"ref_valid_std_noised{random_seed}_corpus.tgt")
+output_test_hypo_file_path = os.path.join(input_file_dir, f"hypo_test_std_noised{random_seed}_corpus.full")
+output_test_ref_file_path = os.path.join(input_file_dir, f"ref_test_std_noised{random_seed}_corpus.tgt")
+
+output_train_hypo_file = codecs.open(output_train_hypo_file_path, 'w', 'utf-8')
+output_train_ref_file = codecs.open(output_train_ref_file_path, 'w', 'utf-8')
+output_valid_hypo_file = codecs.open(output_valid_hypo_file_path, 'w', 'utf-8')
+output_valid_ref_file = codecs.open(output_valid_ref_file_path, 'w', 'utf-8')
+output_test_hypo_file = codecs.open(output_test_hypo_file_path, 'w', 'utf-8')
+output_test_ref_file = codecs.open(output_test_ref_file_path, 'w', 'utf-8')
 for input_file_name in input_file_names:
     if not input_file_name.startswith("std_"): #必须是经过预处理后的
         continue
     input_file_path = os.path.join(input_file_dir, input_file_name)
-    output_train_hypo_file_path = os.path.join(input_file_dir, f"hypo_train_std_noised{random_seed}_corpus.full")
-    output_train_ref_file_path = os.path.join(input_file_dir, f"ref_train_std_noised{random_seed}_corpus.tgt")
-    output_valid_hypo_file_path = os.path.join(input_file_dir, f"hypo_valid_std_noised{random_seed}_corpus.full")
-    output_valid_ref_file_path = os.path.join(input_file_dir, f"ref_valid_std_noised{random_seed}_corpus.tgt")
-    output_test_hypo_file_path = os.path.join(input_file_dir, f"hypo_test_std_noised{random_seed}_corpus.full")
-    output_test_ref_file_path = os.path.join(input_file_dir, f"ref_test_std_noised{random_seed}_corpus.tgt")
-
-    output_train_hypo_file = codecs.open(output_train_hypo_file_path, 'w', 'utf-8')
-    output_train_ref_file = codecs.open(output_train_ref_file_path, 'w', 'utf-8')
-    output_valid_hypo_file = codecs.open(output_valid_hypo_file_path, 'w', 'utf-8')
-    output_valid_ref_file = codecs.open(output_valid_ref_file_path, 'w', 'utf-8')
-    output_test_hypo_file = codecs.open(output_test_hypo_file_path, 'w', 'utf-8')
-    output_test_ref_file = codecs.open(output_test_ref_file_path, 'w', 'utf-8')
 
     train_hypo_werdurs = []
     valid_hypo_werdurs = []
@@ -360,37 +394,35 @@ for input_file_name in input_file_names:
             line = line.strip()
             if not line:
                 continue
-            sentences = preprocess.normAndTokenize(line, 2, True)
-            for sentence in sentences:
-                werdurs, new_tokens = noise_sentence(sentence)
-                if len(new_tokens) > 0: # 一句处理完成（一行有多句）
-                    hypo_werdur = " ".join(new_tokens) + " |||| " + " ".join([str(w) for w in werdurs]) + '\n'
-                    ref = sentence + "\n"
-                    set_op = np.random.choice(set_ops, p=split_rate)
-                    if set_op == TRAIN:
-                        train_hypo_werdurs.append(hypo_werdur)
-                        train_refs.append(ref)
-                    elif set_op == VALID:
-                        valid_hypo_werdurs.append(hypo_werdur)
-                        valid_refs.append(ref)
-                    else:
-                        test_hypo_werdurs.append(hypo_werdur)
-                        test_refs.append(ref)
-                if len(train_hypo_werdurs) > 10000:
-                    output_train_hypo_file.writelines(train_hypo_werdurs)
-                    output_train_ref_file.writelines(train_refs)
-                    train_hypo_werdurs = []
-                    train_refs = []
-                elif len(valid_hypo_werdurs) > 10000:
-                    output_valid_hypo_file.writelines(valid_hypo_werdurs)
-                    output_valid_ref_file.writelines(valid_refs)
-                    valid_hypo_werdurs = []
-                    valid_refs = []
-                elif len(test_hypo_werdurs) > 10000:
-                    output_test_hypo_file.writelines(test_hypo_werdurs)
-                    output_test_ref_file.writelines(test_refs)
-                    test_hypo_werdurs = []
-                    test_refs = []
+            werdurs, new_tokens = noise_sentence(line)
+            if len(new_tokens) > 1: # 一句处理完成（一行有一句）
+                hypo_werdur = " ".join(new_tokens) + " |||| " + " ".join([str(w) for w in werdurs]) + '\n'
+                ref = line + "\n"
+                set_op = np.random.choice(set_ops, p=split_rate)
+                if set_op == TRAIN:
+                    train_hypo_werdurs.append(hypo_werdur)
+                    train_refs.append(ref)
+                elif set_op == VALID:
+                    valid_hypo_werdurs.append(hypo_werdur)
+                    valid_refs.append(ref)
+                else:
+                    test_hypo_werdurs.append(hypo_werdur)
+                    test_refs.append(ref)
+            if len(train_hypo_werdurs) > 10000:
+                output_train_hypo_file.writelines(train_hypo_werdurs)
+                output_train_ref_file.writelines(train_refs)
+                train_hypo_werdurs = []
+                train_refs = []
+            elif len(valid_hypo_werdurs) > 10000:
+                output_valid_hypo_file.writelines(valid_hypo_werdurs)
+                output_valid_ref_file.writelines(valid_refs)
+                valid_hypo_werdurs = []
+                valid_refs = []
+            elif len(test_hypo_werdurs) > 10000:
+                output_test_hypo_file.writelines(test_hypo_werdurs)
+                output_test_ref_file.writelines(test_refs)
+                test_hypo_werdurs = []
+                test_refs = []
 
         output_train_hypo_file.writelines(train_hypo_werdurs)
         output_train_ref_file.writelines(train_refs)

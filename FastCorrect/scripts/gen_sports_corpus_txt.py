@@ -81,30 +81,23 @@ def loadAllCorpus(root_dir):
             if file_path.endswith(".docx"):
                 doc = open_docx_wps(file_path)
                 for paragraph in doc.paragraphs[1:]:
-                    for sentence in preprocess.normAndTokenize(paragraph.text, min_sentence_len=3, split_sentences=True):
-                        corpus = ""
-                        for token in sentence.split():
-                            #英文/字母 用空格隔开
-                            if len(token) > 1 or ('A' <= token[0] <= 'Z' or 'a' <= token[0] <= 'z'):
-                                corpus += (" " + token + " ")
-                            else:
-                                corpus += token
-                        corpus_list.append(corpus + "\n")
+                    # 不分句，这样正确语料才能包含，,、尽可能展示转写过程可能的正确语句
+                    sentences = preprocess.normAndTokenize(paragraph.text, min_sentence_len=2, split_sentences=False, for_wiki=False)
+                    for sentence in sentences:
+                        sentence = sentence.replace(" ", "")
+                        corpus_list.append(sentence + "\n")
                 #doc.Close()
             elif file_path.endswith(".txt"):
                 with open(file_path, 'r', encoding='utf-8') as infile:
                     for line in infile.readlines():
-                        for sentence in preprocess.normAndTokenize(line, min_sentence_len=3, split_sentences=True):
-                            corpus = ""
-                            for token in sentence.split():
-                                if len(token) > 1 or ('A' <= token[0] <= 'Z' or 'a' <= token[0] <= 'z'):
-                                    corpus += (" " + token + " ")
-                                else:
-                                    corpus += token
-                            corpus_list.append(corpus + "\n")
+                        #不分句，这样正确语料才能包含，,、尽可能展示转写过程可能的正确语句
+                        sentences = preprocess.normAndTokenize(line, min_sentence_len=2, split_sentences=False,
+                                                               for_wiki=False)
+                        for sentence in sentences:
+                            sentence = sentence.replace(" ", "")
+                            corpus_list.append(sentence + "\n")
             with open(saved_corpus_path, 'w', encoding='utf-8') as outfile:
                 outfile.writelines(corpus_list)
-
 loadAllCorpus(corpus_root_dir)
 
 

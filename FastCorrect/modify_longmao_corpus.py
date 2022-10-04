@@ -2,8 +2,8 @@ import os
 import codecs
 import cn2an
 
-sports_asr_root_dir = "/root/sports_corpus_en2" #包含从aiui系统导出的语料 aiui_football.txt
-std_sports_asr_root_dir = "/root/sports_corpus_en3"
+sports_asr_root_dir = "/root/sports_corpus_en3" #包含从aiui系统导出的语料 aiui_football.txt
+std_sports_asr_root_dir = "/root/sports_corpus_en4"
 
 cn_digit_map = {}
 cn_digit_map['零'] = '0'
@@ -78,7 +78,12 @@ def asr_replace_func(input_file_path, output_file_dir):
             if len(fields) != 2:
                 continue
             orig_sentence = fields[0].strip()
+            orig_sentence = orig_sentence.strip(",")
+            orig_sentence = orig_sentence.strip("，")
+            orig_sentence.replace(",", "，") #龙猫原始语料中的英文逗号统一转换为中文逗号（和讯飞ASR风格一致）
             hypo_sentence = fields[1].strip()
+            hypo_sentence = hypo_sentence.strip(",")
+            hypo_sentence = hypo_sentence.strip("，")
             if len(orig_sentence) == 0 or len(hypo_sentence) == 0:
                 continue
 
