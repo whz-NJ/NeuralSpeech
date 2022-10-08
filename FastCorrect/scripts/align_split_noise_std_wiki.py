@@ -13,7 +13,7 @@ import codecs
 
 split_rate = [0.9, 0.05, 0.05]
 #random_seed = int(sys.argv[1])
-random_seed = 7
+random_seed = 3
 random.seed(random_seed)
 np.random.seed(random_seed)
 #input_file_dir = '/root/extracted/AA/'
@@ -22,7 +22,7 @@ np.random.seed(random_seed)
 input_file_dir = r'C:\Code\NeuralSpeech\FastCorrect'
 input_file_names= [r'std_wiki_cn.txt']
 dict_file_path = "../dictionary/short.dict.CN_char.txt"
-noise_ratio = 1.0 #0.15
+noise_ratio = 0.15
 
 TRAIN = 0
 VALID = 1
@@ -101,7 +101,7 @@ with open(r'./chinese_char_sim.txt', 'r', encoding='utf-8') as infile:
 force_correction_rule_files = [r'./std_force_correction_rules.txt',
                                r'./hard_force_correction_rules.txt',
                                r'../dictionary/short_noised_English.txt']
-force_correction_rule_files = []
+#force_correction_rule_files = []
 # force_correction_rule_files = [r'./scripts/std_force_correction_rules.txt',
 #                                r'./scripts/hard_force_correction_rules.txt',
 #                                r'../dictionary/short_noised_English.txt']
@@ -236,7 +236,7 @@ def add_tokens_noise(token, op, werdurs, candidates):
         if len(werdurs) > 0:
             if werdurs[-1] >= 2: #当前token是hypo中的第一个token，并且它是个需要删除的random_token,
                                  # 之前ref中还有些token,未出现在hypo中
-                werdurs[-1] = (-1 * werdurs[-1])
+                werdurs[-1] = (-1 * (werdurs[-1] -1)) # (-1*(werdurs[-1]-1))
                 werdurs.append(1) #追加一个正确的token
             else: #当前token不是hypo中的第一个token，当前token是个需要删除的random_token
                 werdurs.extend([0, 1])
@@ -266,6 +266,7 @@ def noise_sentence(sentence):
     new_tokens = []
     werdurs = []
     tokens = sentence.split()
+    filted_tokens = []
     tokens_num = len(tokens)
     if tokens_num == 0:
         return werdurs, new_tokens
@@ -284,6 +285,7 @@ def noise_sentence(sentence):
                         or i == (tokens_num -1) or (tokens[i+1] < '0' or tokens[i+1] > '9'):
                     set_werdurs_for_delete_token(werdurs)
                     i += 1
+                    filted_tokens.append(tok)
                     prev_tok = tok
                     continue
                 if is_time:
@@ -294,6 +296,7 @@ def noise_sentence(sentence):
                 set_werdurs_for_add_token(werdurs, [-1])
                 prev_tok = tok
                 i += 1
+                filted_tokens.append(tok)
                 continue
 
             if tok == ".":
@@ -302,6 +305,7 @@ def noise_sentence(sentence):
                         or i == (tokens_num -1) or (tokens[i+1] < '0' or tokens[i+1] > '9'):
                     set_werdurs_for_delete_token(werdurs)
                     i += 1
+                    filted_tokens.append(tok)
                     prev_tok = tok
                     continue
                 sim_token = np.random.choice(dot_sim_chars)
@@ -309,11 +313,13 @@ def noise_sentence(sentence):
                 set_werdurs_for_add_token(werdurs, [-1])
                 prev_tok = tok
                 i += 1
+                filted_tokens.append(tok)
                 continue
             if tok == "、" or tok == '·' or tok == "'" or tok == "：":
                 #这些字符噪声只有删除
                 set_werdurs_for_delete_token(werdurs)
                 i += 1
+                filted_tokens.append(tok)
                 prev_tok = tok
                 continue
             if tok in preprocess.kept_char_map: #找特殊符号对应的相似读音的中文汉字
@@ -322,6 +328,7 @@ def noise_sentence(sentence):
                 set_werdurs_for_add_token(werdurs, matched_info.werdur)
                 new_tokens.extend(matched_info.sim_words)
                 prev_tok = tok
+                filted_tokens.extend(tokens[i:i + matched_info.matched_tokens_num])
                 i += matched_info.matched_tokens_num
                 continue
             matched_info = trie_dict.get_pairs(tokens[i:])
@@ -343,6 +350,7 @@ def noise_sentence(sentence):
                 if prev_tok == '时' and tok == '间':
                     is_time = True
                 prev_tok = tok
+                filted_tokens.extend(tokens[i:i + matched_tokens_num])
                 i += matched_tokens_num
                 continue
 
@@ -355,15 +363,30 @@ def noise_sentence(sentence):
             is_time = True
         prev_tok = tok
         i += 1
+        filted_tokens.append(tok)
     if len(new_tokens) > 0:
         if len(werdurs) != len(new_tokens):
+            print("err1")
             print(sentence)
             print(new_tokens)
             print(werdurs)
+        tk_cnt = 0
+        for werdur in werdurs:
+            if int(werdur) > 0:
+                tk_cnt += int(werdur)
+            else:
+                tk_cnt += (int(werdur) * -1)
+        if tk_cnt != len(filted_tokens):
+            print("err2")
+            print(sentence)
+            print(new_tokens)
+            print(werdurs)
+            print(filted_tokens)
         assert len(werdurs) == len(new_tokens)
-    return werdurs, new_tokens
+        assert tk_cnt == len(filted_tokens)
+    return " ".join(filted_tokens), werdurs, new_tokens
 
-print(noise_sentence("2 . 2 5 公 尺"))
+print(noise_sentence("马 丁 、 富 勒 讲 话 2 . 0 : 冲 啊 ."))
 print(noise_sentence("3 × 五 = 六"))
 # tokens = noise_sentence(preprocess.normAndTokenize("欢迎来到咪咕体育", 3, True)[0])
 # print(noise_sentence(preprocess.normAndTokenize("欢迎参加miguday", 3, True)[0]))
@@ -401,10 +424,10 @@ for input_file_name in input_file_names:
             line = line.strip()
             if not line:
                 continue
-            werdurs, new_tokens = noise_sentence(line)
+            filt_sentence, werdurs, new_tokens = noise_sentence(line)
             if len(new_tokens) > 1: # 一句处理完成（一行有一句）
                 hypo_werdur = " ".join(new_tokens) + " |||| " + " ".join([str(w) for w in werdurs]) + '\n'
-                ref = line + "\n"
+                ref = filt_sentence + "\n"
                 set_op = np.random.choice(set_ops, p=split_rate)
                 if set_op == TRAIN:
                     train_hypo_werdurs.append(hypo_werdur)
