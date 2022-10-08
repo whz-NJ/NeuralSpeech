@@ -2,8 +2,10 @@ import os
 import codecs
 import cn2an
 
-sports_asr_root_dir = "/root/sports_corpus_en3" #包含从aiui系统导出的语料 aiui_football.txt
-std_sports_asr_root_dir = "/root/sports_corpus_en4"
+sports_asr_root_dir = "/root/noised_sports_corpus3" #包含从aiui系统导出的语料 aiui_football.txt
+std_sports_asr_root_dir = "/root/noised_sports_corpus4"
+
+#sports_asr_root_dir = r'C:\Code\NeuralSpeech\FastCorrect\test'
 
 cn_digit_map = {}
 cn_digit_map['零'] = '0'
@@ -70,6 +72,7 @@ def asr_replace_func(input_file_path, output_file_dir):
         os.makedirs(output_file_dir)
     outfile = codecs.open(os.path.join(output_file_dir, input_file_name), 'w', 'utf-8')
     ref_corpus_map = {}
+    sentences = []
     with codecs.open(input_file_path, 'r', 'utf-8') as myfile:
         for line in myfile:
             if len(line) == 0 or line.isspace():
@@ -80,10 +83,12 @@ def asr_replace_func(input_file_path, output_file_dir):
             orig_sentence = fields[0].strip()
             orig_sentence = orig_sentence.strip(",")
             orig_sentence = orig_sentence.strip("，")
+            orig_sentence = orig_sentence.strip(".")
             orig_sentence.replace(",", "，") #龙猫原始语料中的英文逗号统一转换为中文逗号（和讯飞ASR风格一致）
             hypo_sentence = fields[1].strip()
             hypo_sentence = hypo_sentence.strip(",")
             hypo_sentence = hypo_sentence.strip("，")
+            hypo_sentence = hypo_sentence.strip(".")
             if len(orig_sentence) == 0 or len(hypo_sentence) == 0:
                 continue
 
@@ -98,8 +103,31 @@ def asr_replace_func(input_file_path, output_file_dir):
                 else: #讯飞不正确
                     if not ref_corpus_map.__contains__(orig_sentence): #只有在讯飞语料没有时才暂存龙猫语料
                         ref_corpus_map[orig_sentence] = orig_sentence
+                    orig_idx = 0
+                    hypo_idx = 0
+                    orig_seg = ""
+                    hypo_seg = ""
+                    while orig_idx < len(mod_orig_sentence) and hypo_idx < len(mod_hypo_sentence):
+                        if mod_hypo_sentence[hypo_idx] == '，' or mod_hypo_sentence[hypo_idx] == '。':
+                            if len(orig_seg) > 1 and hypo_seg == orig_seg:
+                                sentences.append(orig_seg + "\t" + orig_seg + "\n")
+                                hypo_seg = ""
+                                orig_seg = ""
+                                hypo_idx += 1
+                            elif orig_idx == 0:
+                                hypo_idx += 1
+                            else:
+                                break
+                        elif mod_hypo_sentence[hypo_idx] == mod_orig_sentence[orig_idx]:
+                            hypo_seg += mod_hypo_sentence[hypo_idx]
+                            orig_seg += mod_orig_sentence[orig_idx]
+                            orig_idx += 1
+                            hypo_idx += 1
+                        else:
+                            break
+                    if len(orig_seg) > 1 and hypo_seg == orig_seg:
+                        sentences.append(orig_seg + "\t" + orig_seg + "\n")
 
-    sentences = []
     with codecs.open(input_file_path, 'r', 'utf-8') as myfile:
         for line in myfile:
             if len(line) == 0 or line.isspace():
@@ -109,11 +137,19 @@ def asr_replace_func(input_file_path, output_file_dir):
                 continue
 
             orig_sentence = fields[0].strip()
+            orig_sentence = orig_sentence.strip(",")
+            orig_sentence = orig_sentence.strip("，")
+            orig_sentence = orig_sentence.strip(".")
             hypo_sentence = fields[1].strip()
+            hypo_sentence = hypo_sentence.strip(",")
+            hypo_sentence = hypo_sentence.strip("，")
+            hypo_sentence = hypo_sentence.strip(".")
             if len(orig_sentence) == 0 or len(hypo_sentence) == 0:
                 continue
-            pair = ref_corpus_map[orig_sentence] + "\t" + hypo_sentence + "\n"
+            orig_sentence = ref_corpus_map[orig_sentence]
+            pair = orig_sentence + "\t" + hypo_sentence + "\n"
             sentences.append(pair)
+
             if len(sentences) >= 10000:
                 outfile.writelines(sentences)
                 sentences = []

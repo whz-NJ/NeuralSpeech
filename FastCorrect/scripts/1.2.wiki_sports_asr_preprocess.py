@@ -34,7 +34,7 @@ def wiki_replace_func(input_file_path, output_file_dir):
             line = line.replace('zh-hans:', '。')
             line = line.replace('zh-hant:', '。')
             line = line.replace('zh-sg:', '。')
-            sentences.extend([sentence + '\n' for sentence in preprocess.normAndTokenize(line, min_sentence_len=2, split_sentences=True, for_wiki=True)])
+            sentences.extend([sentence + '\n' for sentence in preprocess.normAndTokenize(line, min_sentence_len=2, split_sentences=True)])
             if len(sentences) >= 10000:
                 outfile.writelines(sentences)
                 sentences = []
@@ -64,8 +64,8 @@ def asr_replace_func(input_file_path, output_file_dir):
             if len(orig_sentence) == 0 or len(hypo_sentence) == 0:
                 continue
             # 不分句，这样正确语料才能包含，,、尽可能展示转写过程可能的正确语句
-            orig_sentences = preprocess.normAndTokenize(orig_sentence, min_sentence_len=2, split_sentences=False, for_wiki=False)
-            hypo_sentences = preprocess.normAndTokenize(hypo_sentence, min_sentence_len=2, split_sentences=False, for_wiki=False)
+            orig_sentences = preprocess.normAndTokenize(orig_sentence, min_sentence_len=2, split_sentences=True)
+            hypo_sentences = preprocess.normAndTokenize(hypo_sentence, min_sentence_len=2, split_sentences=True)
             if len(orig_sentences) == 0 or len(hypo_sentences) == 0 or len(orig_sentences) != len(hypo_sentences):
                 continue
 
@@ -116,9 +116,9 @@ def run():
             for rule in infile:
                 fields = rule.split('\t')
                 orig_words = fields[0].strip()
-                orig_sentences = preprocess.normAndTokenize(orig_words, min_sentence_len=1, for_wiki=False)
+                orig_sentences = preprocess.normAndTokenize(orig_words, min_sentence_len=1)
                 error_words = fields[1].strip()
-                error_sentences = preprocess.normAndTokenize(error_words, min_sentence_len=1, for_wiki=False)
+                error_sentences = preprocess.normAndTokenize(error_words, min_sentence_len=1)
                 sentences = orig_sentences
                 sentences.extend(error_sentences)
                 tokens = []

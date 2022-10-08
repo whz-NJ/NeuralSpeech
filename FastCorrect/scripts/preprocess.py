@@ -49,19 +49,12 @@ def my_an2cn(digitsStr):
         return str_to_digits(digitsStr)
     return cn2an.an2cn(digitsStr, 'low')
 
-asr_seperator_map = {}
-for ch in r'<>?。！？;；()（）[]【】{}《》「」—,，':
-    asr_seperator_map[ch] = ch
-asr_kept_char_map = {}
-for ch in r"%@.:+-=/×÷~&、:·'": #其中 %:,，、：·' 没有 unify_pining
-    asr_kept_char_map[ch] = ch
-
-wiki_seperator_map = {}
-for ch in r'<>?。！？;；()（）[]【】{}《》「」—，,':
-    wiki_seperator_map[ch] = ch
-wiki_kept_char_map = {}
-for ch in r"%@.:+-=/×÷~&、:·'": #其中 %:,，、：·' 没有 unify_pining
-    wiki_kept_char_map[ch] = ch
+seperator_map = {}
+for ch in r'<>。！!？?;；()（）[]【】{}《》「」—，,':
+    seperator_map[ch] = ch
+kept_char_map = {}
+for ch in r"%@.+-=/×÷~&、·':":
+    kept_char_map[ch] = ch
 
 def Q2B(uchar):
     """全角转半角"""
@@ -128,7 +121,8 @@ def my_cn2an(cnDigitsStr):
         result = '.' + result
     return result
 
-def extract_cn_digits(line, tokens, start_index=0, cn_to_an = False, debug=False):
+print(my_cn2an("2.3"))
+def extract_cn_digits(line, tokens, start_index=0, cn_to_an = False, ignore_JI=False):
     digits_count = 0
     cn_digits = ""
     an_digits = ""
@@ -157,10 +151,11 @@ def extract_cn_digits(line, tokens, start_index=0, cn_to_an = False, debug=False
         else:
             break
     ending_ch = ""
-    if idx < len(line):
-        ending_ch = Q2B(line[idx])
-        if ending_ch == '几': #中文数字后面跟有概数
-            return -1 # 不应该把中文概数数字转换为阿拉伯数字
+    if not ignore_JI:
+        if idx < len(line):
+            ending_ch = Q2B(line[idx])
+            if ending_ch == '几': #中文数字后面跟有概数
+                return -1 # 不应该把中文概数数字转换为阿拉伯数字
 
     if not cn_to_an:
         if ending_ch == '多':
@@ -183,8 +178,6 @@ def extract_cn_digits(line, tokens, start_index=0, cn_to_an = False, debug=False
             tokens.append('+')
             tokens_count_dict['+'] = tokens_count_dict.get('+', 0) + 1
             digits_count += 1
-    if debug:
-        print(tokens)
     return digits_count
 
 # test_digits = extract_cn_digits("五十三",[])
@@ -211,14 +204,7 @@ def extract_cn_digits(line, tokens, start_index=0, cn_to_an = False, debug=False
 # test_digits = extract_cn_digits("负五十多",[],0,True)
 
 #拆成独立发音的 tokens
-def normAndTokenize(line, min_sentence_len=2, split_sentences=False, for_wiki = False):
-    seperator_map = wiki_seperator_map
-    if not for_wiki:
-        seperator_map = asr_seperator_map
-    kept_char_map = wiki_kept_char_map
-    if not for_wiki:
-        kept_char_map = asr_kept_char_map
-
+def normAndTokenize(line, min_sentence_len=2, split_sentences=False):
     sentences = []
     def append_english_digits(append_english=False, append_digits=False, append_cn_digits=False, cn_to_an = False):
         nonlocal tokens, english, digits, cn_digits
@@ -313,7 +299,7 @@ def normAndTokenize(line, min_sentence_len=2, split_sentences=False, for_wiki = 
                 append_english_digits(append_english=True, append_cn_digits=True) #如果有中文数字，保持原样，不转换为阿拉伯数字
                 digits += ch # 阿拉伯数字中的点号
         elif '\u4e00' <= ch <= '\u9fa5': #汉字
-            if ch != '分' and not cn_digit_map.__contains__(ch):
+            if ch != '分' and ch != '比' and not cn_digit_map.__contains__(ch):
                 append_english_digits(True, True, True) # 当前汉字为普通的汉字。前面如果有中文数字，保持原样，不转换为阿拉伯数字
                 tokens.append(ch)
                 tokens_count_dict[ch] = tokens_count_dict.get(ch, 0) + 1
@@ -351,6 +337,33 @@ def normAndTokenize(line, min_sentence_len=2, split_sentences=False, for_wiki = 
                     append_english_digits(True, True, True) #中文数字保持原样，不转换为阿拉伯数字
                     tokens.append(ch)
                     tokens_count_dict[ch] = tokens_count_dict.get(ch, 0) + 1
+            elif ch == '比':
+                if len(cn_digits) > 0 and prev_ch in cn_digit_map and next_ch in cn_digit_map:
+                    digits1 = []
+                    extract_cn_digits(cn_digits, digits1, 0, False, True)
+                    digits2 = []
+                    digits_num = extract_cn_digits(line, digits2, idx+1, False, True)
+                    idx += (1+digits_num)
+                    next_next_ch = ""
+                    if idx < len(line):
+                        next_next_ch = Q2B(line[idx])
+                    if next_next_ch != '大' and next_next_ch != '小' and next_next_ch != '多' and next_next_ch != '少':
+                        tokens.extend([d for d in my_cn2an("".join(digits1))])
+                        tokens.append(":")
+                        tokens_count_dict[':'] = tokens_count_dict.get(':', 0) + 1
+                        tokens.extend([d for d in my_cn2an("".join(digits2))])
+                    else:
+                        tokens.extend(digits1)
+                        tokens.append("比")
+                        tokens_count_dict['比'] = tokens_count_dict.get('比', 0) + 1
+                        tokens.extend(digits2)
+                    cn_digits = ""
+                    prev_ch = digits2[-1]
+                    continue
+                else:
+                    append_english_digits(True, True, True)  # 中文数字保持原样，不转换为阿拉伯数字
+                    tokens.append(ch)
+                    tokens_count_dict[ch] = tokens_count_dict.get(ch, 0) + 1
             else: #ch 是中文数字或汉字点
                 cn_digits += ch
         elif ('a' <= ch <= 'z') or ('A' <= ch <= 'Z'): #英文
@@ -365,6 +378,12 @@ def normAndTokenize(line, min_sentence_len=2, split_sentences=False, for_wiki = 
     if len(tokens) >= min_sentence_len:  # 分句且当前句子token数满足要求
         sentences.append(" ".join(tokens))
     return sentences
+
+# print(normAndTokenize("a现在比分是三比二啊ab"))
+# print(normAndTokenize("ab现在比分是3:2cd啊"))
+# print(normAndTokenize("现在五比二大三ab啊"))
+# print(normAndTokenize("现在5比2大3啊"))
+print(normAndTokenize("助攻二十五比十三几乎是一倍"))
 
 # print(normAndTokenize("比例是百分之三十点三"))
 # print(normAndTokenize("比例是五分之三"))

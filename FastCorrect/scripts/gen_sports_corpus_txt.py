@@ -82,7 +82,7 @@ def loadAllCorpus(root_dir):
                 doc = open_docx_wps(file_path)
                 for paragraph in doc.paragraphs[1:]:
                     # 不分句，这样正确语料才能包含，,、尽可能展示转写过程可能的正确语句
-                    sentences = preprocess.normAndTokenize(paragraph.text, min_sentence_len=2, split_sentences=False, for_wiki=False)
+                    sentences = preprocess.normAndTokenize(paragraph.text, min_sentence_len=2, split_sentences=True)
                     for sentence in sentences:
                         sentence = sentence.replace(" ", "")
                         corpus_list.append(sentence + "\n")
@@ -91,8 +91,7 @@ def loadAllCorpus(root_dir):
                 with open(file_path, 'r', encoding='utf-8') as infile:
                     for line in infile.readlines():
                         #不分句，这样正确语料才能包含，,、尽可能展示转写过程可能的正确语句
-                        sentences = preprocess.normAndTokenize(line, min_sentence_len=2, split_sentences=False,
-                                                               for_wiki=False)
+                        sentences = preprocess.normAndTokenize(line, min_sentence_len=2, split_sentences=True)
                         for sentence in sentences:
                             sentence = sentence.replace(" ", "")
                             corpus_list.append(sentence + "\n")

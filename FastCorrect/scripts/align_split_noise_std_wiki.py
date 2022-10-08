@@ -101,6 +101,7 @@ with open(r'./chinese_char_sim.txt', 'r', encoding='utf-8') as infile:
 force_correction_rule_files = [r'./std_force_correction_rules.txt',
                                r'./hard_force_correction_rules.txt',
                                r'../dictionary/short_noised_English.txt']
+force_correction_rule_files = []
 # force_correction_rule_files = [r'./scripts/std_force_correction_rules.txt',
 #                                r'./scripts/hard_force_correction_rules.txt',
 #                                r'../dictionary/short_noised_English.txt']
@@ -290,7 +291,7 @@ def noise_sentence(sentence):
                 else:
                     sim_token = np.random.choice(bi_sim_chars)
                 new_tokens.append(sim_token)
-                werdurs.append(-1)
+                set_werdurs_for_add_token(werdurs, [-1])
                 prev_tok = tok
                 i += 1
                 continue
@@ -305,7 +306,7 @@ def noise_sentence(sentence):
                     continue
                 sim_token = np.random.choice(dot_sim_chars)
                 new_tokens.append(sim_token)
-                werdurs.append(-1)
+                set_werdurs_for_add_token(werdurs, [-1])
                 prev_tok = tok
                 i += 1
                 continue
@@ -315,7 +316,7 @@ def noise_sentence(sentence):
                 i += 1
                 prev_tok = tok
                 continue
-            if tok in preprocess.wiki_kept_char_map:
+            if tok in preprocess.kept_char_map: #找特殊符号对应的相似读音的中文汉字
                 candidates = trie_dict.get_pairs(tokens[i : i+1])
                 matched_info = np.random.choice(candidates)
                 set_werdurs_for_add_token(werdurs, matched_info.werdur)
@@ -354,9 +355,15 @@ def noise_sentence(sentence):
             is_time = True
         prev_tok = tok
         i += 1
+    if len(new_tokens) > 0:
+        if len(werdurs) != len(new_tokens):
+            print(sentence)
+            print(new_tokens)
+            print(werdurs)
+        assert len(werdurs) == len(new_tokens)
     return werdurs, new_tokens
 
-print(noise_sentence("马 丁 、 富 勒 讲 话 2 . 0 : 冲 啊 ."))
+print(noise_sentence("2 . 2 5 公 尺"))
 print(noise_sentence("3 × 五 = 六"))
 # tokens = noise_sentence(preprocess.normAndTokenize("欢迎来到咪咕体育", 3, True)[0])
 # print(noise_sentence(preprocess.normAndTokenize("欢迎参加miguday", 3, True)[0]))
