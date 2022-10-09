@@ -3,9 +3,8 @@ import codecs
 import cn2an
 
 sports_asr_root_dir = "/root/noised_sports_corpus3" #包含从aiui系统导出的语料 aiui_football.txt
-std_sports_asr_root_dir = "/root/noised_sports_corpus4"
 
-#sports_asr_root_dir = r'C:\Code\NeuralSpeech\FastCorrect\test'
+sports_asr_root_dir = r'C:\Code\NeuralSpeech\FastCorrect\test'
 
 cn_digit_map = {}
 cn_digit_map['零'] = '0'
@@ -66,11 +65,11 @@ def replace_cn_digits(sentence):
             modified_sentence += cn_digits
     return modified_sentence
 
-def asr_replace_func(input_file_path, output_file_dir):
+def asr_replace_func(input_file_path):
     input_file_name = os.path.basename(input_file_path)
-    if not os.path.isdir(output_file_dir):
-        os.makedirs(output_file_dir)
-    outfile = codecs.open(os.path.join(output_file_dir, input_file_name), 'w', 'utf-8')
+    input_file_dir = os.path.dirname(input_file_path)
+    output_file_name = "tmp_" + input_file_name
+    outfile = codecs.open(os.path.join(input_file_dir, output_file_name), 'w', 'utf-8')
     ref_corpus_map = {}
     sentences = []
     with codecs.open(input_file_path, 'r', 'utf-8') as myfile:
@@ -158,21 +157,21 @@ def asr_replace_func(input_file_path, output_file_dir):
         outfile.writelines(sentences)
 
     outfile.close()
+    os.remove(os.path.join(input_file_dir, input_file_name))
+    os.rename(os.path.join(input_file_dir, output_file_name), os.path.join(input_file_dir, input_file_name))
 
-def preprocess_sports_asr(root_dir, input_base_dir, output_base_dir):
+def preprocess_sports_asr(root_dir):
     for root,dirs,files in os.walk(root_dir):
         for file in files:
             if not file.endswith(".txt"):
                 continue
             file_path = os.path.join(root, file)
-            common_sub_dir = root.replace(input_base_dir, "").lstrip("/")
-            output_file_dir = os.path.join(output_base_dir, common_sub_dir)
-            asr_replace_func(file_path, output_file_dir) #运动语料出现的词语必须出现
+            asr_replace_func(file_path) #运动语料出现的词语必须出现
             print(f"{file_path} has been processed.")
 #s1 = replace_cn_digits("五 打 二")
 #s2 = replace_cn_digits(" 5 打 2")
 #print(s1)
 # print(s2)
 # print(s1==s2)
-preprocess_sports_asr(sports_asr_root_dir, sports_asr_root_dir, std_sports_asr_root_dir)
+preprocess_sports_asr(sports_asr_root_dir)
 #asr_replace_func(r"C:\Code\NeuralSpeech\FastCorrect\test\cba.txt", r"C:\Code\NeuralSpeech\FastCorrect\test2")
