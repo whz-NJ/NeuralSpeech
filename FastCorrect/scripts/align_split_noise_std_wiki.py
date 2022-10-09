@@ -44,7 +44,6 @@ with open(dict_file_path, 'r', encoding='utf-8') as infile:
         count = fields[1]
         token_count_dict[word] = count
 
-#with open('./scripts/sim_prun_char.txt', 'r', encoding='utf-8') as infile:
 with open(r'./sim_prun_char.txt', 'r', encoding='utf-8') as infile:
     for line in infile.readlines():
         line = line.strip()
@@ -62,14 +61,9 @@ with open(r'./sim_prun_char.txt', 'r', encoding='utf-8') as infile:
         if len(sim_vocab) == 1:
             #print("skip ", line)
             continue
-        for ch in sim_vocab:
-            trie_dict.insert([vocab], [ch])
-        # if vocab_length >= 9:
-        #     #print("skip ", line)
-        #     continue
-        #sim_dict[first_char][vocab_length][vocab] = sim_vocab
+        for chs in sim_vocab:
+            trie_dict.insert([vocab], [ch for ch in chs])
 
-#with open('./scripts/chinese_char_sim.txt', 'r', encoding='utf-8') as infile:
 with open(r'./chinese_char_sim.txt', 'r', encoding='utf-8') as infile:
     for id, line in enumerate(infile.readlines()):
         line = line.strip()
@@ -315,7 +309,7 @@ def noise_sentence(sentence):
                 i += 1
                 filted_tokens.append(tok)
                 continue
-            if tok == "、" or tok == '·' or tok == "'" or tok == "：":
+            if tok == "、" or tok == '·' or tok == "'":
                 #这些字符噪声只有删除
                 set_werdurs_for_delete_token(werdurs)
                 i += 1

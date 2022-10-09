@@ -50,10 +50,10 @@ def my_an2cn(digitsStr):
     return cn2an.an2cn(digitsStr, 'low')
 
 seperator_map = {}
-for ch in r'<>。！!？?;；()（）[]【】{}《》「」—，,':
+for ch in r'<>。！!？?;；()（）[]【】{}「」—，,：':
     seperator_map[ch] = ch
 kept_char_map = {}
-for ch in r"%@.+-=/×÷~&、·':":
+for ch in r"%@.*+-=/×÷~&、·':<>":
     kept_char_map[ch] = ch
 
 def Q2B(uchar):

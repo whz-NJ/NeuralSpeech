@@ -16,6 +16,44 @@
     cp ref_valid_std_noised_corpus.txt.tgt valid.zh_CN_tgt
     cp hypo_test_std_noised_corpus.txt.src.werdur.full test.zh_CN
     cp ref_test_std_noised_corpus.txt.tgt test.zh_CN_tgt
+
+	cat hypo_train_std_noised9_corpus.full >> train.zh_CN
+	cat hypo_train_std_noised7_corpus.full >> train.zh_CN
+	cat hypo_train_std_noised5_corpus.full >> train.zh_CN
+	cat hypo_train_std_noised3_corpus.full >> train.zh_CN
+	cat hypo_train_std_noised1_corpus.full >> train.zh_CN
+
+	cat ref_train_std_noised9_corpus.tgt >> train.zh_CN_tgt
+	cat ref_train_std_noised7_corpus.tgt >> train.zh_CN_tgt
+	cat ref_train_std_noised5_corpus.tgt >> train.zh_CN_tgt
+	cat ref_train_std_noised3_corpus.tgt >> train.zh_CN_tgt
+	cat ref_train_std_noised1_corpus.tgt >> train.zh_CN_tgt
+
+
+	cat hypo_valid_std_noised9_corpus.full >> valid.zh_CN
+	cat hypo_valid_std_noised7_corpus.full >> valid.zh_CN
+	cat hypo_valid_std_noised5_corpus.full >> valid.zh_CN
+	cat hypo_valid_std_noised3_corpus.full >> valid.zh_CN
+	cat hypo_valid_std_noised1_corpus.full >> valid.zh_CN
+
+	cat ref_valid_std_noised9_corpus.tgt >> valid.zh_CN_tgt
+	cat ref_valid_std_noised7_corpus.tgt >> valid.zh_CN_tgt
+	cat ref_valid_std_noised5_corpus.tgt >> valid.zh_CN_tgt
+	cat ref_valid_std_noised3_corpus.tgt >> valid.zh_CN_tgt
+	cat ref_valid_std_noised1_corpus.tgt >> valid.zh_CN_tgt
+
+
+	cat hypo_test_std_noised9_corpus.full >> test.zh_CN
+	cat hypo_test_std_noised7_corpus.full >> test.zh_CN
+	cat hypo_test_std_noised5_corpus.full >> test.zh_CN
+	cat hypo_test_std_noised3_corpus.full >> test.zh_CN
+	cat hypo_test_std_noised1_corpus.full >> test.zh_CN
+
+	cat ref_test_std_noised9_corpus.tgt >> test.zh_CN_tgt
+	cat ref_test_std_noised7_corpus.tgt >> test.zh_CN_tgt
+	cat ref_test_std_noised5_corpus.tgt >> test.zh_CN_tgt
+	cat ref_test_std_noised3_corpus.tgt >> test.zh_CN_tgt
+	cat ref_test_std_noised1_corpus.tgt >> test.zh_CN_tgt
 执行 data-gen.sh 将对齐结果二进制化
 执行 train_pretrain.sh 训练模型
 执行 train_ft.sh 对模型微调

@@ -48,6 +48,8 @@ def open_docx_wps(path):
 
 def loadAllCorpus(root_dir):
     for root,dirs,files in os.walk(root_dir):
+        if root.find('五大联赛') == -1 and root.find('世界杯') == -1:#只处理足球相关语料
+            continue
         for file in files:
             file_path = os.path.join(root, file)
             saved_corpus_path = file_path.replace(corpus_root_dir, processed_corpus_root_dir)
@@ -81,7 +83,6 @@ def loadAllCorpus(root_dir):
             if file_path.endswith(".docx"):
                 doc = open_docx_wps(file_path)
                 for paragraph in doc.paragraphs[1:]:
-                    # 不分句，这样正确语料才能包含，,、尽可能展示转写过程可能的正确语句
                     sentences = preprocess.normAndTokenize(paragraph.text, min_sentence_len=2, split_sentences=True)
                     for sentence in sentences:
                         sentence = sentence.replace(" ", "")
@@ -90,7 +91,6 @@ def loadAllCorpus(root_dir):
             elif file_path.endswith(".txt"):
                 with open(file_path, 'r', encoding='utf-8') as infile:
                     for line in infile.readlines():
-                        #不分句，这样正确语料才能包含，,、尽可能展示转写过程可能的正确语句
                         sentences = preprocess.normAndTokenize(line, min_sentence_len=2, split_sentences=True)
                         for sentence in sentences:
                             sentence = sentence.replace(" ", "")
