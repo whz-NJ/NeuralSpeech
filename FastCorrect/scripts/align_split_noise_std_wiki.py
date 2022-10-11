@@ -294,7 +294,7 @@ def noise_sentence(sentence):
                 continue
 
             if tok == ".":
-                # 给汉字后面的点号/句末的点号/不是两个数字中间的点号加噪声，只可能是删除该冒号
+                # 给汉字后面的点号/句末的点号/不是两个数字中间的点号加噪声，只可能是删除该点号
                 if prev_tok == "" or ('\u4e00' <= prev_tok <= '\u9fa5' or prev_tok < '0' or prev_tok > '9') \
                         or i == (tokens_num -1) or (tokens[i+1] < '0' or tokens[i+1] > '9'):
                     set_werdurs_for_delete_token(werdurs)

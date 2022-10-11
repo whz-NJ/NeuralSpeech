@@ -51,6 +51,8 @@ def loadAllCorpus(root_dir):
         if root.find('五大联赛') == -1 and root.find('世界杯') == -1:#只处理足球相关语料
             continue
         for file in files:
+            if file.find('滑雪') != -1 or file.find('雪车') != -1: #只处理足球相关语料
+                continue
             file_path = os.path.join(root, file)
             saved_corpus_path = file_path.replace(corpus_root_dir, processed_corpus_root_dir)
             saved_corpus_dir = os.path.dirname(saved_corpus_path)

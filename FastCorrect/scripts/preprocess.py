@@ -379,60 +379,42 @@ def normAndTokenize(line, min_sentence_len=2, split_sentences=False):
         sentences.append(" ".join(tokens))
     return sentences
 
-# print(normAndTokenize("a现在比分是三比二啊ab"))
-# print(normAndTokenize("ab现在比分是3:2cd啊"))
-# print(normAndTokenize("现在五比二大三ab啊"))
-# print(normAndTokenize("现在5比2大3啊"))
-print(normAndTokenize("助攻二十五比十三几乎是一倍"))
-
-# print(normAndTokenize("比例是百分之三十点三"))
-# print(normAndTokenize("比例是五分之三"))
-# print(normAndTokenize("比分是五十三比三十七"))
-# print(normAndTokenize("三七二十一"))
-# print(normAndTokenize("获奖ocean项目"))
-# print(normAndTokenize("获奖sen eye v1.2.3项目"))
-# print(normAndTokenize("算式:3*7=21"))
-# print(normAndTokenize("就这:现场报道，你好。下面开始",split_sentences=True))
-# print(normAndTokenize("卡尔·恩·马尔",split_sentences=True))
-# print(normAndTokenize("Opec's"))
-# print(normAndTokenize("现 在 C B A 赛 事 转 播"))
-# print(normAndTokenize("比例是百分之三十点三"))
-# print(normAndTokenize('我们1/23的人abc30%的概率，59.2÷37=32.5-35.3=0')[0])
-
-# '%@.:+-=/×÷~&'
-punctMap = {}
-punctMap['+'] = '加'
-punctMap['@'] = '艾特'
-punctMap['×'] = '乘'
-punctMap['='] = '等于'
-punctMap['&'] = '安得'
-punctMap['-'] = '减'
-punctMap['÷'] = '除'
-punctMap['~'] = '至'
-punctMap['.'] = '点'
-def normAndTokenize4Ch(line, min_sentence_len=2, split_sentences=False):
+def longNormAndTokenize(line, min_sentence_len=3, take_seperators=True):
     sentences = []
-    def append_digits():
-        nonlocal tokens, digits
-        if len(digits) > 0: #数字分开
-            tokens.extend([c for c in my_an2cn(digits)])
+    def append_english_digits(append_english=False, append_digits=False, append_cn_digits=False, cn_to_an = False):
+        nonlocal tokens, english, digits, cn_digits
+        if append_english and len(english) > 0:
+            if english.upper() != english: #如果不是全大写，则转为全小写（统一）
+                english = english.lower()
+            tokens.append(english)
+            tokens_count_dict[english] = tokens_count_dict.get(english, 0) + 1
+            english = ''
+        if append_digits and len(digits) > 0: #数字分开(否则词典太大)
+            for digit in digits:
+                tokens.append(digit)
+                tokens_count_dict[digit] = tokens_count_dict.get(digit, 0) + 1
             digits = ''
-
-    def extract_digits(words):
-        digits_count = 0
-        digits = ""
-        nonlocal tokens
-        for ch in words:
-            if '0' <= ch <= '9' or ch == '.':
-                digits += ch
-                digits_count += 1
+        if append_cn_digits and len(cn_digits) > 0:
+            if not cn_to_an:
+                for digit in cn_digits:
+                    tokens.append(digit)
+                    tokens_count_dict[digit] = tokens_count_dict.get(digit, 0) + 1
             else:
-                break
-        tokens.extend([c for c in my_an2cn(digits)])
-        return digits_count
+                an_digits = my_cn2an(cn_digits)
+                if not an_digits or len(an_digits) == 0:
+                    return False
+                for digit in an_digits: #将中文数字转换为阿拉伯数字
+                    tokens.append(digit)
+                    tokens_count_dict[digit] = tokens_count_dict.get(digit, 0) + 1
+            cn_digits = ''
+        return True
 
     tokens = []
+    sentence = ""
+    tokens_cnt = 0
+    english = ''
     digits = ''
+    cn_digits = ''
     prev_ch = ''
     line = line.strip()
     idx = 0
@@ -440,98 +422,132 @@ def normAndTokenize4Ch(line, min_sentence_len=2, split_sentences=False):
         ch = Q2B(line[idx])
         if idx < (len(line)-1):
             next_ch = Q2B(line[idx+1])
-            if ch == '°':
-                append_digits()
-                if next_ch == 'C' or next_ch == 'c':
-                    tokens.append('摄')
-                    tokens.append('氏')
-                    tokens.append('度')
-                    idx += 2  # 跳过下一个字符
-                else:
-                    idx += 1
-                    tokens.append('度')
-                prev_ch = ''
+            if (ch == '°') and (next_ch == 'C' or next_ch == 'c'):
+                tokens.append('C')
+                tokens_count_dict['C'] = tokens_count_dict.get('C', 0) + 1
+                prev_ch = ch
+                idx += 2  # 跳过下一个字符
                 continue
+            # 将中文摄氏度统一转换为°C，如果是单独的度，就不转换为°了，让模型自己转换
+            elif ch == '摄' and next_ch == '氏' and idx < (len(line)-2):
+                next_next_ch = Q2B(line[idx+2])
+                if next_next_ch == '度':
+                    if append_english_digits(True, True, True, True): #如果有中文数字，转换为阿拉伯数字
+                        tokens.append('°')
+                        tokens.append('C')
+                        tokens_count_dict['°'] = tokens_count_dict.get('°', 0) + 1
+                        tokens_count_dict['C'] = tokens_count_dict.get('C', 0) + 1
+                        prev_ch = '度'
+                        idx += 3  # 跳过下两个字符
+                    else: #中文数字无法转换为阿拉伯数字
+                        append_english_digits(False, False, True) #中文数字无法转换为对应阿拉伯数字，保留为中文数字
+                        tokens.append(ch)
+                        tokens_count_dict[ch] = tokens_count_dict.get(ch, 0) + 1
+                        prev_ch = ch
+                        idx += 1
+                    continue
         else:
             next_ch = ''
 
         if seperator_map.__contains__(ch): #句子分隔符
-            append_digits()
-            if not split_sentences: #不分句（处理ASR输出或强制纠错规则时）
-                prev_ch = ch
-                idx = idx + 1  # 丢弃，跳到下一个字符
-                continue
-            if len(tokens) >= min_sentence_len: # 分句且当前句子token数满足要求
-                sentences.append(" ".join(tokens))
+            append_english_digits(True, True, True) #如果有中文数字，保持原样，不转换为阿拉伯数字
+            if tokens_cnt >= min_sentence_len: # 分句且当前句子token数满足要求
+                sentences.append(sentence) # 每个token中间用空格分隔
+                tokens_cnt = 0
+                sentence = ""
+            elif len(tokens) >= 1:
+                sentence += " " +" ".join(tokens + [ch])
+                tokens_cnt += len(tokens)
             tokens = []
         elif '0' <= ch <= '9': #数字
+            append_english_digits(append_english=True, append_cn_digits=True) #如果有中文数字，保持原样，不转换为阿拉伯数字
             digits += ch
+        # '%@.:+-=/\'×÷~&':
         elif kept_char_map.__contains__(ch): #需要保留的符号
-            if ch == '%':
-                if '0' <= prev_ch <= '9':  # 百分号跟在数字后
-                    tokens.append('百')  # 先加百分号，再加数字
-                    tokens.append('分')
-                    tokens.append('之')
-                append_digits()  # 先加百分号，再加数字
-                prev_ch = ch
-                idx = idx + 1
-                continue
-            if ch == '+' or ch == '=' or ch =='@' or ch == '×'\
-                    or ch == '&' or ch == '~' or ch == '÷':
-                append_digits()
-                tokens.extend([c for c in punctMap[ch]]) #拆出来
-                prev_ch = ch
-                idx = idx + 1
-                continue
-            if '0' <= prev_ch <= '9' and ('0' <= next_ch <= '9'): #ch是需保留符号，两边都是数字
-                if ch == '.':
-                    digits += '.' # 数字中的点
-                elif ch == ':':
-                    is_time = False
-                    if digits.find('.') == -1 and len(digits) == 2 and int(digits) < 24:
-                        if (idx < len(line) - 2):
-                            next_next_ch = Q2B(line[idx+2])
-                            if '0' <= next_next_ch <= '9':
-                                next_digit = int('' + next_ch + next_next_ch)
-                                if next_digit < 60:
-                                    #当前字符往后数的第3个字符不是数字
-                                    if (idx == len(line) - 3) or line[idx+3] < '0' or line[idx+3] > '9':
-                                        append_digits()
-                                        tokens.append('点')
-                                        is_time = True
-                    if not is_time:
-                        append_digits()
-                        tokens.append('比')
-                elif ch == '/':
-                        digits_count = extract_digits(line[idx+1:]) #先取后面数字
-                        tokens.append('分') # 再取 /
-                        tokens.append('之')
-                        append_digits() # 再取前面的数字
-                        idx += digits_count
-                elif ch == '-': #ch是-，两边都是数字
-                    append_digits()
-                    tokens.append('减')
-            elif '0' <= next_ch <= '9' and ch == '-': #ch是需保留符号，右边是数字，左边不是数字
-                tokens.append('负')
-            else: #ch是需保留符号，两边都不是数字
-                if ch == '.':
-                    append_digits()
-                    tokens.append('点')
-                else: #不在两个数字或英文字母之间的特殊符号，作为词分隔符
-                    append_digits()
-                    if not split_sentences:
-                        prev_ch = ch
-                        idx = idx + 1  # 丢弃，跳到下一个字符
-                        continue
+            if(ch != '.') or not (('0' <= prev_ch <= '9') or ('0' <= next_ch <= '9')):
+                append_english_digits(True, True, True) #如果有中文数字，保持原样，不转换为阿拉伯数字
+                tokens.append(ch) # 不在数字中间的点作为独立的 token
+                tokens_count_dict[ch] = tokens_count_dict.get(ch, 0) + 1
+            else:
+                append_english_digits(append_english=True, append_cn_digits=True) #如果有中文数字，保持原样，不转换为阿拉伯数字
+                digits += ch # 阿拉伯数字中的点号
         elif '\u4e00' <= ch <= '\u9fa5': #汉字
-            append_digits()
-            tokens.append(ch)
+            if ch != '分' and ch != '比' and not cn_digit_map.__contains__(ch):
+                append_english_digits(True, True, True) # 当前汉字为普通的汉字。前面如果有中文数字，保持原样，不转换为阿拉伯数字
+                tokens.append(ch)
+                tokens_count_dict[ch] = tokens_count_dict.get(ch, 0) + 1
+            elif ch == '分':
+                if next_ch == '之':
+                    if cn_digit_map.__contains__(prev_ch):
+                        # 中文读比例数字时，分子在后面读，而阿拉伯数字表示比例，分子在前面
+                        # 这里先提取阿拉伯数字表示法中需要的分子
+                        digits_num = extract_cn_digits(line, tokens, idx + 2, True, False)
+                        if digits_num == -1: #遇到了中文概数，此时不应该转换为阿拉伯数字
+                            append_english_digits(True, True, True)  # 中文数字保持原样，不转换为阿拉伯数字
+                            tokens.append(ch)
+                            tokens_count_dict[ch] = tokens_count_dict.get(ch, 0) + 1
+                        else:
+                            #再提取阿拉伯数字中的比例符号
+                            if prev_ch == '百' and cn_digits == '百':
+                                cn_digits = '' #把前面的汉字数字清空，因为比例符号包含了
+                                append_english_digits(append_english=True, append_digits=True)
+                                tokens.append('%')
+                                tokens_count_dict['%'] = tokens_count_dict.get('%', 0) + 1
+                            else:
+                                append_english_digits(append_english=True, append_digits=True)
+                                tokens.append('/')
+                                tokens_count_dict['/'] = tokens_count_dict.get('/', 0) + 1
+                                # 最后提取阿拉伯数字表示法中需要的分母
+                                append_english_digits(append_cn_digits=True, cn_to_an=True)
+                        idx += digits_num + 2
+                        prev_ch = ''
+                        continue
+                    else: #不是比例数字
+                        append_english_digits(True, True, True) #中文数字保持原样，不转换为阿拉伯数字
+                        tokens.append(ch)
+                        tokens_count_dict[ch] = tokens_count_dict.get(ch, 0) + 1
+                else:
+                    append_english_digits(True, True, True) #中文数字保持原样，不转换为阿拉伯数字
+                    tokens.append(ch)
+                    tokens_count_dict[ch] = tokens_count_dict.get(ch, 0) + 1
+            elif ch == '比':
+                if len(cn_digits) > 0 and prev_ch in cn_digit_map and next_ch in cn_digit_map:
+                    digits1 = []
+                    extract_cn_digits(cn_digits, digits1, 0, False, True)
+                    digits2 = []
+                    digits_num = extract_cn_digits(line, digits2, idx+1, False, True)
+                    idx += (1+digits_num)
+                    next_next_ch = ""
+                    if idx < len(line):
+                        next_next_ch = Q2B(line[idx])
+                    if next_next_ch != '大' and next_next_ch != '小' and next_next_ch != '多' and next_next_ch != '少':
+                        tokens.extend([d for d in my_cn2an("".join(digits1))])
+                        tokens.append(":")
+                        tokens_count_dict[':'] = tokens_count_dict.get(':', 0) + 1
+                        tokens.extend([d for d in my_cn2an("".join(digits2))])
+                    else:
+                        tokens.extend(digits1)
+                        tokens.append("比")
+                        tokens_count_dict['比'] = tokens_count_dict.get('比', 0) + 1
+                        tokens.extend(digits2)
+                    cn_digits = ""
+                    prev_ch = digits2[-1]
+                    continue
+                else:
+                    append_english_digits(True, True, True)  # 中文数字保持原样，不转换为阿拉伯数字
+                    tokens.append(ch)
+                    tokens_count_dict[ch] = tokens_count_dict.get(ch, 0) + 1
+            else: #ch 是中文数字或汉字点
+                cn_digits += ch
+        elif ('a' <= ch <= 'z') or ('A' <= ch <= 'Z'): #英文
+            append_english_digits(append_digits=True, append_cn_digits=True) #中文数字保持原样，不转换为阿拉伯数字
+            english += ch
         elif ch == ' ' or ch == "\t":
-            append_digits()
+            append_english_digits(True, True, True) #跳过语料中的空格（函数结束前统一加空格作为各token分隔符），中文数字保持原样，不转换为阿拉伯数字
         prev_ch = ch
         idx = idx + 1
     #一行扫描结束
-    append_digits()
+    append_english_digits(True, True, True) #中文数字保持原样，不转换为阿拉伯数字
     if len(tokens) >= min_sentence_len:  # 分句且当前句子token数满足要求
         sentences.append(" ".join(tokens))
     return sentences

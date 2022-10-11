@@ -165,6 +165,8 @@ def preprocess_sports_asr(root_dir):
         for file in files:
             if not file.endswith(".txt"):
                 continue
+            if file.find("football.txt") != -1:
+                continue
             file_path = os.path.join(root, file)
             asr_replace_func(file_path) #运动语料出现的词语必须出现
             print(f"{file_path} has been processed.")

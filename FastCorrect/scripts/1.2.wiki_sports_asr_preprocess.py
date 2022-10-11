@@ -72,12 +72,14 @@ def asr_replace_func(input_file_path, output_file_dir):
             for orig_sentence, hypo_sentence in zip(orig_sentences, hypo_sentences):
                 sentences.append(orig_sentence + '\t' + hypo_sentence + '\n')
                 for token in orig_sentence.split():
+                    # preprocess.normAndTokenize() 方法会统计各个token出现次数
                     count = preprocess.tokens_count_dict.get(token, 0)
                     if count >= MIN_RULE_TOKEN_COUNT:
                         continue
                     # token一定要出现在词表中
                     preprocess.tokens_count_dict[token] = MIN_RULE_TOKEN_COUNT + count
                 for token in hypo_sentence.split():
+                    # preprocess.normAndTokenize() 方法会统计各个token出现次数
                     count = preprocess.tokens_count_dict.get(token, 0)
                     if count >= MIN_RULE_TOKEN_COUNT:
                         continue
@@ -140,9 +142,9 @@ def run():
     preprocess_sports_asr(sports_asr_root_dir, sports_asr_root_dir, std_sports_asr_root_dir)
 
     #处理各wiki文件
-    # for data_name in wiki_data_names:
-    #     wiki_replace_func(os.path.join(wiki_data_path, data_name), std_wiki_data_root_dir)
-    #     print('{0} has been processed.'.format(data_name))
+    for data_name in wiki_data_names:
+        wiki_replace_func(os.path.join(wiki_data_path, data_name), std_wiki_data_root_dir)
+        print('{0} has been processed.'.format(data_name))
 
     #保存词表
     with codecs.open(os.path.join(std_sports_asr_root_dir, 'dict.CN_char.txt'), 'w', 'utf-8') as dictfile:
