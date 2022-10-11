@@ -548,8 +548,8 @@ def longNormAndTokenize(line, min_sentence_len=3, take_seperators=True):
         idx = idx + 1
     #一行扫描结束
     append_english_digits(True, True, True) #中文数字保持原样，不转换为阿拉伯数字
-    if len(tokens) >= min_sentence_len:  # 分句且当前句子token数满足要求
-        sentences.append(" ".join(tokens))
+    if tokens_cnt >= min_sentence_len:  # 分句且当前句子token数满足要求
+        sentences.append(sentence)
     return sentences
 
 def main():
