@@ -17,6 +17,7 @@ fairseq-train $DATA_PATH --task fastcorrect \
         --length-loss-factor 0.5 \
         --noise full_mask \
         --src-with-werdur \
+        --skip-invalid-size-inputs-valid-test \
         --dur-predictor-type "v2" \
         --dropout 0.3 --weight-decay 0.0001 \
         --optimizer adam --adam-betas '(0.9, 0.98)' --clip-norm 0.0 \
