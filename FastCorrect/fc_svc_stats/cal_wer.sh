@@ -17,7 +17,7 @@ do
      continue
   fi
   fc_data_json_file_name=$(basename "$fc_data_json_file")
-  asr_data_json_file_name=$(echo "${fc_data_json_file_name}" | sed -e "s/^fc_/hypo_/")
+  asr_data_json_file_name=$(echo "${fc_data_json_file_name}" | sed -e "s/^fc_/asr_/")
   asr_data_json_file=$(dirname "$fc_data_json_file")/${asr_data_json_file_name}
   echo "begin to process ${fc_data_json_file_name}"
 

@@ -379,7 +379,7 @@ def normAndTokenize(line, min_sentence_len=2, split_sentences=False):
         sentences.append(" ".join(tokens))
     return sentences
 
-def longNormAndTokenize(line, min_sentence_len=3, take_seperators=True):
+def longNormAndTokenize(line, min_sentence_len=3):
     sentences = []
     def append_english_digits(append_english=False, append_digits=False, append_cn_digits=False, cn_to_an = False):
         nonlocal tokens, english, digits, cn_digits
@@ -412,6 +412,7 @@ def longNormAndTokenize(line, min_sentence_len=3, take_seperators=True):
     tokens = []
     sentence = ""
     tokens_cnt = 0
+    prev_tokens_cnt = 0
     english = ''
     digits = ''
     cn_digits = ''
@@ -451,13 +452,17 @@ def longNormAndTokenize(line, min_sentence_len=3, take_seperators=True):
 
         if seperator_map.__contains__(ch): #句子分隔符
             append_english_digits(True, True, True) #如果有中文数字，保持原样，不转换为阿拉伯数字
+            tokens_cnt += len(tokens)
+            if len(tokens) >= 1:
+                if len(sentence) > 0:
+                    sentence += " " + " ".join(tokens + [ch])
+                else:
+                    sentence = " ".join(tokens + [ch])
             if tokens_cnt >= min_sentence_len: # 分句且当前句子token数满足要求
                 sentences.append(sentence) # 每个token中间用空格分隔
+                prev_tokens_cnt = tokens_cnt
                 tokens_cnt = 0
                 sentence = ""
-            elif len(tokens) >= 1:
-                sentence += " " +" ".join(tokens + [ch])
-                tokens_cnt += len(tokens)
             tokens = []
         elif '0' <= ch <= '9': #数字
             append_english_digits(append_english=True, append_cn_digits=True) #如果有中文数字，保持原样，不转换为阿拉伯数字
@@ -548,8 +553,15 @@ def longNormAndTokenize(line, min_sentence_len=3, take_seperators=True):
         idx = idx + 1
     #一行扫描结束
     append_english_digits(True, True, True) #中文数字保持原样，不转换为阿拉伯数字
-    if tokens_cnt >= min_sentence_len:  # 分句且当前句子token数满足要求
+    if len(tokens) >= min_sentence_len:
+        if len(sentence) > 0:
+            sentence += " " + " ".join(tokens)
+        else:
+            sentence = " ".join(tokens)
         sentences.append(sentence)
+    elif len(tokens) >= 1:
+        if prev_tokens_cnt + len(tokens) >= min_sentence_len:
+            sentences[-1] = sentences[-1] + " " + " ".join(tokens)
     return sentences
 
 def main():
@@ -563,6 +575,10 @@ def main():
     # print(normAndTokenize("现在比分是9:20"))
     # print(normAndTokenize("职业生涯CBA的第3场比赛"))
     # print(normAndTokenize("21.34"))
+    # print(longNormAndTokenize("，艾特、咪咕、足球，可以参与一起英超微博的话题讨论"))
+    print(longNormAndTokenize("，呵呵，这个是不是。啊"))
+    print(longNormAndTokenize("，鲍恩。上个赛季是英超最为瞩目的中场球员之一	"))
+    print(longNormAndTokenize("球员之一,好的"))
     print(normAndTokenize("现 在 C B A 赛 事 转 播"))
     # print(normAndTokenize("现在CBA赛事转播"))
     print(normAndTokenize("比例是百分之三十点三"))
