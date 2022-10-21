@@ -2,13 +2,14 @@ import os
 import codecs
 import cn2an
 
-sports_asr_root_dir = "/root/noised_sports_corpus3" #包含从aiui系统导出的语料 aiui_football.txt
+sports_asr_root_dir = "/root/noised_sports_corpus4" #包含从aiui系统导出的语料 aiui_football.txt
 
-sports_asr_root_dir = r'C:\Code\NeuralSpeech\FastCorrect\test'
+#sports_asr_root_dir = r'C:\Code\NeuralSpeech\FastCorrect\test'
 
 cn_digit_map = {}
 cn_digit_map['零'] = '0'
 cn_digit_map['一'] = '1'
+cn_digit_map['幺'] = '1'
 cn_digit_map['二'] = '2'
 cn_digit_map['三'] = '3'
 cn_digit_map['四'] = '4'
@@ -64,7 +65,6 @@ def replace_cn_digits(sentence):
         except Exception as e:
             modified_sentence += cn_digits
     return modified_sentence
-
 def asr_replace_func(input_file_path):
     input_file_name = os.path.basename(input_file_path)
     input_file_dir = os.path.dirname(input_file_path)
@@ -80,13 +80,15 @@ def asr_replace_func(input_file_path):
             if len(fields) != 2:
                 continue
             orig_sentence = fields[0].strip()
-            orig_sentence = orig_sentence.strip(",")
-            orig_sentence = orig_sentence.strip("，")
+            #经过预处理的句子是单句，不会再包含逗号点号了（暂时不考虑断句模型输出，经过FC模型训练的情况）
+            # orig_sentence = orig_sentence.strip(",")
+            # orig_sentence = orig_sentence.strip("，")
             orig_sentence = orig_sentence.strip(".")
-            orig_sentence.replace(",", "，") #龙猫原始语料中的英文逗号统一转换为中文逗号（和讯飞ASR风格一致）
+            # 大数字中asr结果有英文的,但是经过预处理，英文逗号没有了（暂时不考虑断句模型输出，经过FC模型训练的情况）
+            # orig_sentence.replace(",", "，")
             hypo_sentence = fields[1].strip()
-            hypo_sentence = hypo_sentence.strip(",")
-            hypo_sentence = hypo_sentence.strip("，")
+            # hypo_sentence = hypo_sentence.strip(",")
+            # hypo_sentence = hypo_sentence.strip("，")
             hypo_sentence = hypo_sentence.strip(".")
             if len(orig_sentence) == 0 or len(hypo_sentence) == 0:
                 continue
@@ -102,30 +104,31 @@ def asr_replace_func(input_file_path):
                 else: #讯飞不正确
                     if not ref_corpus_map.__contains__(orig_sentence): #只有在讯飞语料没有时才暂存龙猫语料
                         ref_corpus_map[orig_sentence] = orig_sentence
-                    orig_idx = 0
-                    hypo_idx = 0
-                    orig_seg = ""
-                    hypo_seg = ""
-                    while orig_idx < len(mod_orig_sentence) and hypo_idx < len(mod_hypo_sentence):
-                        if mod_hypo_sentence[hypo_idx] == '，' or mod_hypo_sentence[hypo_idx] == '。':
-                            if len(orig_seg) > 1 and hypo_seg == orig_seg:
-                                sentences.append(orig_seg + "\t" + orig_seg + "\n")
-                                hypo_seg = ""
-                                orig_seg = ""
-                                hypo_idx += 1
-                            elif orig_idx == 0:
-                                hypo_idx += 1
-                            else:
-                                break
-                        elif mod_hypo_sentence[hypo_idx] == mod_orig_sentence[orig_idx]:
-                            hypo_seg += mod_hypo_sentence[hypo_idx]
-                            orig_seg += mod_orig_sentence[orig_idx]
-                            orig_idx += 1
-                            hypo_idx += 1
-                        else:
-                            break
-                    if len(orig_seg) > 1 and hypo_seg == orig_seg:
-                        sentences.append(orig_seg + "\t" + orig_seg + "\n")
+                    #下面考虑的是预处理时输出带有seperator符号的情况（没有分句，分句是通过另外的断句模型进行），暂时不考虑
+                    # orig_idx = 0
+                    # hypo_idx = 0
+                    # orig_seg = ""
+                    # hypo_seg = ""
+                    # while orig_idx < len(mod_orig_sentence) and hypo_idx < len(mod_hypo_sentence):
+                    #     if mod_hypo_sentence[hypo_idx] == '，' or mod_hypo_sentence[hypo_idx] == '。':
+                    #         if len(orig_seg) > 1 and hypo_seg == orig_seg:
+                    #             sentences.append(orig_seg + "\t" + orig_seg + "\n")
+                    #             hypo_seg = ""
+                    #             orig_seg = ""
+                    #             hypo_idx += 1
+                    #         elif orig_idx == 0:
+                    #             hypo_idx += 1
+                    #         else:
+                    #             break
+                    #     elif mod_hypo_sentence[hypo_idx] == mod_orig_sentence[orig_idx]:
+                    #         hypo_seg += mod_hypo_sentence[hypo_idx]
+                    #         orig_seg += mod_orig_sentence[orig_idx]
+                    #         orig_idx += 1
+                    #         hypo_idx += 1
+                    #     else:
+                    #         break
+                    # if len(orig_seg) > 1 and hypo_seg == orig_seg:
+                    #     sentences.append(orig_seg + "\t" + orig_seg + "\n")
 
     with codecs.open(input_file_path, 'r', 'utf-8') as myfile:
         for line in myfile:
@@ -136,12 +139,12 @@ def asr_replace_func(input_file_path):
                 continue
 
             orig_sentence = fields[0].strip()
-            orig_sentence = orig_sentence.strip(",")
-            orig_sentence = orig_sentence.strip("，")
+            # orig_sentence = orig_sentence.strip(",")
+            # orig_sentence = orig_sentence.strip("，")
             orig_sentence = orig_sentence.strip(".")
             hypo_sentence = fields[1].strip()
-            hypo_sentence = hypo_sentence.strip(",")
-            hypo_sentence = hypo_sentence.strip("，")
+            # hypo_sentence = hypo_sentence.strip(",")
+            # hypo_sentence = hypo_sentence.strip("，")
             hypo_sentence = hypo_sentence.strip(".")
             if len(orig_sentence) == 0 or len(hypo_sentence) == 0:
                 continue
@@ -165,8 +168,9 @@ def preprocess_sports_asr(root_dir):
         for file in files:
             if not file.endswith(".txt"):
                 continue
-            if file.find("football.txt") != -1:
-                continue
+            # 跳过 noised_aiui_football3.txt，保留 filename_aiui_football3_asr.txt
+            # if file.find("football.txt") != -1 and file.find("_asr") == -1:
+            #     continue
             file_path = os.path.join(root, file)
             asr_replace_func(file_path) #运动语料出现的词语必须出现
             print(f"{file_path} has been processed.")

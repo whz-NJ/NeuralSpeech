@@ -4,8 +4,8 @@ import random
 
 split_rate = [0.9, 0.05, 0.05]
 # processed_corpus_root_dir = "/root/std_ftb_sports_corpus_en"
-processed_corpus_root_dir = "/root/std_sports_corpus_en2"
-aiui_corpus_file_names = ["std_aiui_football.txt"] #从aiui系统导出的语料
+processed_corpus_root_dir = "/root/std_noised_sports_corpus4"
+aiui_corpus_file_names = ["std_filename_aiui_football3_asr.txt", "std_noised_aiui_football3.txt"] #从aiui系统导出的语料
 
 def replace_dot_path(path):
     pwd = os.getcwd()
@@ -91,7 +91,7 @@ def splitTrainValidTest_aiui():
     train_stop_index = int(corpuse_nums * split_rate[0])
     valid_stop_index = int(corpuse_nums * (split_rate[0] + split_rate[1]))
     corpus_indexes = list(range(corpuse_nums))
-    random.shuffle(corpus_indexes)
+    random.shuffle(corpus_indexes) #顺序打乱
 
     # 抽取训练集数据
     corpus_lines = []

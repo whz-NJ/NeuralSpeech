@@ -55,16 +55,16 @@ for asr_file_name,ref_file_name in zip(asr_file_names, ref_file_names):
                 continue
             fc_result = fc_correct("".join(asr_sentence.split()))
             output0 = {'rec_text': fc_result, 'rec_token': " ".join(fc_result),
-                       'text': "".join(ref_sentence),
-                       'token': " ".join(ref_sentence)}
+                       'text': "".join("".join(ref_sentence.split())),
+                       'token': " ".join(ref_sentence.split())}
             id = str(bson.ObjectId())
             output1 = [output0]
             output = {'output': output1}
             fc_objects["utts"][id] = output
 
             output0 = {'rec_text': "".join(asr_sentence.split()), 'rec_token': " ".join(asr_sentence.split()),
-                       'text': "".join(ref_sentence),
-                       'token': " ".join(ref_sentence)}
+                       'text': "".join("".join(ref_sentence.split())),
+                       'token': " ".join(ref_sentence.split())}
             output1 = [output0]
             output = {'output': output1}
             asr_objects["utts"][id] = output

@@ -48,9 +48,9 @@ def open_docx_wps(path):
 
 def loadAllCorpus(root_dir):
     for root,dirs,files in os.walk(root_dir):
-        if root.find('五大联赛') == -1 and root.find('世界杯') == -1:#只处理足球相关语料
-            continue
         for file in files:
+            if root.find('五大联赛') == -1 and root.find('世界杯') == -1 and file.find('aiui_football') == -1:  # 只处理足球相关语料
+                continue
             if file.find('滑雪') != -1 or file.find('雪车') != -1: #只处理足球相关语料
                 continue
             file_path = os.path.join(root, file)
@@ -92,13 +92,41 @@ def loadAllCorpus(root_dir):
                 #doc.Close()
             elif file_path.endswith(".txt"):
                 with open(file_path, 'r', encoding='utf-8') as infile:
-                    for line in infile.readlines():
-                        sentences = preprocess.normAndTokenize(line, min_sentence_len=2, split_sentences=True)
-                        for sentence in sentences:
-                            sentence = sentence.replace(" ", "")
-                            corpus_list.append(sentence + "\n")
+                    if(file.find("aiui_football") != -1):
+                        if file.find("filename") != -1:
+                            for line in infile.readlines():
+                                fields = line.split("\t")
+                                if len(fields) != 2:
+                                    continue
+                                fileName = fields[0]
+                                corpus = fields[1]
+                                sentences = preprocess.normAndTokenize(corpus, min_sentence_len=2, split_sentences=True)
+                                for sentence in sentences:
+                                    sentence = fileName + "\t" + sentence.replace(" ", "")
+                                    corpus_list.append(sentence + "\n")
+                        else:
+                            for line in infile.readlines():
+                                fields = line.split("\t")
+                                if len(fields) != 2:
+                                    continue
+                                ref_sentences = fields[0]
+                                hypo_sentences = fields[1]
+                                ref_sentences = preprocess.normAndTokenize(ref_sentences, min_sentence_len=2, split_sentences=True)
+                                hypo_sentences = preprocess.normAndTokenize(hypo_sentences, min_sentence_len=2, split_sentences=True)
+                                if not ref_sentences or not hypo_sentences or len(ref_sentences) != len(hypo_sentences):
+                                    continue
+                                for ref_sentence,hypo_sentence in zip(ref_sentences, hypo_sentences):
+                                    ref_hypo = ref_sentence.replace(" ", "") + "\t" + hypo_sentence.replace(" ", "")
+                                    corpus_list.append(ref_hypo + "\n")
+                    else:
+                        for line in infile.readlines():
+                            sentences = preprocess.normAndTokenize(line, min_sentence_len=2, split_sentences=True)
+                            for sentence in sentences:
+                                sentence = sentence.replace(" ", "")
+                                corpus_list.append(sentence + "\n")
             with open(saved_corpus_path, 'w', encoding='utf-8') as outfile:
                 outfile.writelines(corpus_list)
 loadAllCorpus(corpus_root_dir)
+
 
 
