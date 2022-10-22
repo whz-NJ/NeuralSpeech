@@ -74,7 +74,17 @@ def align_encoder(hypo_sen, ref_sen):
 
     return output_src_str, output_tgt_str
 
+out = align_encoder("数 学 对 肝 这 些 领 域 的 蓟 应 用 通 常 被 辰 为 应 数 学".split(),
+                    "数 学 对    这 些 领 域 的    应 用 通 常 被 称 为 应 用 数 学".split())
+print(out)
 
+out = align_encoder("1 9 8 0 视 剧 集 上 绫 海 滩 症 饰 严 冯 精 尧".split(),
+                    "1 9 8 0 年 在 电 视 剧 集 上 海 滩 中 饰 演 冯 敬 尧".split())
+print(out)
+
+out = align_encoder("地 球 村 遍 得 过 时".split(),
+                    "地 球 村 逐 渐 变 得 过 时".split())
+print(out)
 
 for hypo_file_name, ref_file_name in zip(hypo_input_file_names, ref_input_file_names):
     hypo_file_path = os.path.join(input_file_dir, hypo_file_name)

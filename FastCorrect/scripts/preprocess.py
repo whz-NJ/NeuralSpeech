@@ -209,8 +209,11 @@ def normAndTokenize(line, min_sentence_len=2, split_sentences=False):
     def append_english_digits(append_english=False, append_digits=False, append_cn_digits=False, cn_to_an = False):
         nonlocal tokens, english, digits, cn_digits
         if append_english and len(english) > 0:
-            if english.upper() != english: #如果不是全大写，则转为全小写（统一）
-                english = english.lower()
+            if len(english) > 1:
+                if english.upper() != english: #如果单词不是全大写，则转为全小写（统一）
+                    english = english.lower()
+            else: # 如果是字母，统一用大写
+                english = english.upper()
             tokens.append(english)
             tokens_count_dict[english] = tokens_count_dict.get(english, 0) + 1
             english = ''

@@ -39,16 +39,15 @@ def split_tokens(line):
     def add_english():
         nonlocal tokens, english
         if len(english) > 0:
-            if english.upper() != english:
-                tokens.append(english.lower())
-                if not token_count_map.__contains__(english.lower()):
-                    unknown_english_word_count_map[english.lower()] = \
-                        unknown_english_word_count_map.get(english.lower(), 0) + 1
-            else:
-                tokens.append(english.upper())
-                if not token_count_map.__contains__(english.upper()):
-                    unknown_english_word_count_map[english.upper()] = \
-                        unknown_english_word_count_map.get(english.upper(), 0) + 1
+            if(len(english)) > 1: #如果不是全大写，则转为全小写（统一）
+                if english.upper() != english:
+                    english = english.lower()
+            else: # 如果是字母，全部大写
+                english = english.upper()
+                tokens.append(english())
+            if not token_count_map.__contains__(english()):
+                unknown_english_word_count_map[english()] = \
+                    unknown_english_word_count_map.get(english(), 0) + 1
             english = ""
     for ch in line:
         if '\u4e00' <= ch <= '\u9fa5': #汉字

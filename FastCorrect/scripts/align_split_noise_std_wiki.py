@@ -156,12 +156,13 @@ prob_op2 = [4/5, 2/25, 2/25, 1/25]
 all_op3 = [SUB, INS_L, INS_R] #有三个连续token都匹配，就不认为应该删除
 prob_op3 = [2/3, 1/6, 1/6]
 
+#hypo中后面新增 matched_werdur，和 hypo 前面的 werdurs 合并
 def set_werdurs_for_add_token(werdurs, matched_werdur):
     if len(werdurs) > 0:
         if werdurs[-1] >= 2:  # 之前hypo里没有token
             if matched_werdur[0] == 1:
                 werdurs[-1] = -1 * werdurs[-1]  # 目前为止错误token数(包括当前tokens中的第一个token)
-            elif matched_werdur[0] == 0:
+            elif matched_werdur[0] == 0: #当前待append的ref tokens中，第一个token在hypo中有一个多余的token在ref token前面
                 werdurs[-1] = -1 * (werdurs[-1] - 1)
             else:  # 当前替换的tokens第一个也是错误的token
                 werdurs[-1] = matched_werdur[0] - werdurs[-1] + 1
@@ -171,11 +172,12 @@ def set_werdurs_for_add_token(werdurs, matched_werdur):
     else:
         werdurs.extend(matched_werdur)
 
+#ref中的token不出现在hypo中
 def set_werdurs_for_delete_token(werdurs):
     if len(werdurs) > 0:
         if werdurs[-1] == 1:  # 之前hypo里有token
             werdurs[-1] = -2
-        elif werdurs[-1] == 0:  # 之前hypo中多出一个错误token，本次丢弃ref的冒号，两个操作连在一起，就是替换
+        elif werdurs[-1] == 0:  # 之前hypo中多出一个错误token，本次丢弃ref的token，两个操作连在一起，就是替换
             werdurs[-1] = -1
         elif werdurs[-1] < 0:  # 之前hypo里有些错误token
             werdurs[-1] -= 1

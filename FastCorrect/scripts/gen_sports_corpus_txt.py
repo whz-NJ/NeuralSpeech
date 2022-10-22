@@ -6,7 +6,7 @@ import win32com.client
 import preprocess
 
 corpus_root_dir = "../sports_corpus"
-processed_corpus_root_dir = "../sports_corpus3"
+processed_corpus_root_dir = "../sports_corpus5"
 # corpus_root_dir = r"C:\Users\OS\Desktop\足球"
 # processed_corpus_root_dir = r"C:\Users\OS\Desktop\足球2"
 
