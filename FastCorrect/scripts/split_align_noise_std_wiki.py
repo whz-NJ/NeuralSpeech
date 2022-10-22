@@ -380,14 +380,14 @@ for input_file_name in input_file_names:
                     output_train_ref_file.writelines(train_refs)
                 train_hypo_werdurs = []
                 train_refs = []
-            elif len(valid_hypo_werdurs) > 10000:
+            if len(valid_hypo_werdurs) > 10000:
                 with open(output_valid_hypo_file_path, 'w+', encoding='utf-8') as output_valid_hypo_file:
                     output_valid_hypo_file.writelines(valid_hypo_werdurs)
                 with open(output_valid_ref_file_path, 'w+', encoding='utf-8') as output_valid_ref_file:
                     output_valid_ref_file.writelines(valid_refs)
                 valid_hypo_werdurs = []
                 valid_refs = []
-            elif len(test_hypo_werdurs) > 10000:
+            if len(test_hypo_werdurs) > 10000:
                 with open(output_test_hypo_file_path, 'w+', encoding='utf-8') as output_test_hypo_file:
                     output_test_hypo_file.writelines(test_hypo_werdurs)
                 with open(output_test_ref_file_path, 'w+', encoding='utf-8') as output_test_ref_file:
