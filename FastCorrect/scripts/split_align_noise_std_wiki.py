@@ -11,6 +11,8 @@ import trie
 import preprocess
 import codecs
 import cal_wer_dur_v1
+# import tracemalloc
+# tracemalloc.start(25)
 
 split_rate = [0.9, 0.05, 0.05]
 #random_seed = int(sys.argv[1])
@@ -18,13 +20,14 @@ random_seed = 3
 random.seed(random_seed)
 np.random.seed(random_seed)
 # input_file_dir = '/root/extracted/AA/'
-input_file_dir = '/root/std_wiki'
+input_file_dir = './std_wiki'
 input_file_names = [r'std_zh_wiki_00', r'std_zh_wiki_01', r'std_zh_wiki_02'] #output of wiki_preprocess.py
 # input_file_dir = r'C:\Code\NeuralSpeech\FastCorrect'
 # input_file_names= [r'std_wiki_cn.txt']
 
 dict_file_path = "../dictionary/short.dict.CN_char.txt"
 noise_ratio = 0.15
+MAX_CORPUS_NUM = 200000 #一个文件最多保存的语料行数
 
 TRAIN = 0
 VALID = 1
@@ -320,26 +323,30 @@ print(noise_sentence("3 × 五 = 六"))
 
 import time
 begin_time = time.time()
-output_train_hypo_file_path = os.path.join(input_file_dir, f"hypo_train_std_noised{random_seed}_corpus.full")
-output_train_ref_file_path = os.path.join(input_file_dir, f"ref_train_std_noised{random_seed}_corpus.tgt")
-output_valid_hypo_file_path = os.path.join(input_file_dir, f"hypo_valid_std_noised{random_seed}_corpus.full")
-output_valid_ref_file_path = os.path.join(input_file_dir, f"ref_valid_std_noised{random_seed}_corpus.tgt")
-output_test_hypo_file_path = os.path.join(input_file_dir, f"hypo_test_std_noised{random_seed}_corpus.full")
-output_test_ref_file_path = os.path.join(input_file_dir, f"ref_test_std_noised{random_seed}_corpus.tgt")
+#删除老的文件
+path_list=os.listdir(input_file_dir)
+for filename in path_list:
+    post_fix = os.path.splitext(filename)[1]
+    if post_fix ==".tgt" or post_fix == ".full":
+        file_path = os.path.join(input_file_dir, filename)
+    	if os.path.isfile(file_path):
+            os.remove(file_path)
+train_output_file_idx = 0
+valid_output_file_idx = 0
+test_output_file_idx = 0
 
-if os.path.isfile(output_train_hypo_file_path):
-    os.remove(output_train_hypo_file_path)
-if os.path.isfile(output_train_ref_file_path):
-    os.remove(output_train_ref_file_path)
-if os.path.isfile(output_valid_hypo_file_path):
-    os.remove(output_valid_hypo_file_path)
-if os.path.isfile(output_valid_ref_file_path):
-    os.remove(output_valid_ref_file_path)
-if os.path.isfile(output_test_hypo_file_path):
-    os.remove(output_test_hypo_file_path)
-if os.path.isfile(output_test_ref_file_path):
-    os.remove(output_test_ref_file_path)
+def write_split_align_result(data_set_name, file_idx, hypo_werdurs, refs):
+    hypo_file_name = f"{data_set_name}_hypo_std_noised{random_seed:02d}_corpus{file_idx:03d}.full"
+    hypo_file_path = os.path.join(input_file_dir, hypo_file_name)
+    with open(hypo_file_path, 'w', encoding='utf-8') as output_hypo_file:
+        output_hypo_file.writelines(hypo_werdurs)
 
+    ref_file_name = f"{data_set_name}_ref_std_noised{random_seed:02d}_corpus{file_idx:03d}.tgt"
+    ref_file_path = os.path.join(input_file_dir, ref_file_name)
+    with open(ref_file_path, 'w', encoding='utf-8') as output_ref_file:
+        output_ref_file.writelines(refs)
+
+corpus_count = 0
 for input_file_name in input_file_names:
     if not input_file_name.startswith("std_"): #必须是经过预处理后的
         continue
@@ -352,9 +359,11 @@ for input_file_name in input_file_names:
     valid_refs = []
     test_refs = []
     with open(input_file_path, 'r', encoding='utf-8') as infile:
-        for count, line in enumerate(infile.readlines()):
-            if count % 5000 == 1:
-                print("{} finished in {}s".format(count-1, time.time()-begin_time))
+        for line in infile.readlines():
+            corpus_count = corpus_count + 1
+            if corpus_count % 5000 == 1:
+                print("{} finished in {}s".format(corpus_count-1, time.time()-begin_time))
+
             line = line.strip()
             if not line:
                 continue
@@ -373,41 +382,29 @@ for input_file_name in input_file_names:
                 else:
                     test_hypo_werdurs.append(hypo_werdur)
                     test_refs.append(ref)
-            if len(train_hypo_werdurs) > 10000:
-                with open(output_train_hypo_file_path, 'w+', encoding='utf-8') as output_train_hypo_file:
-                    output_train_hypo_file.writelines(train_hypo_werdurs)
-                with open(output_train_ref_file_path, 'w+', encoding='utf-8') as output_train_ref_file:
-                    output_train_ref_file.writelines(train_refs)
-                train_hypo_werdurs = []
-                train_refs = []
-            if len(valid_hypo_werdurs) > 10000:
-                with open(output_valid_hypo_file_path, 'w+', encoding='utf-8') as output_valid_hypo_file:
-                    output_valid_hypo_file.writelines(valid_hypo_werdurs)
-                with open(output_valid_ref_file_path, 'w+', encoding='utf-8') as output_valid_ref_file:
-                    output_valid_ref_file.writelines(valid_refs)
-                valid_hypo_werdurs = []
-                valid_refs = []
-            if len(test_hypo_werdurs) > 10000:
-                with open(output_test_hypo_file_path, 'w+', encoding='utf-8') as output_test_hypo_file:
-                    output_test_hypo_file.writelines(test_hypo_werdurs)
-                with open(output_test_ref_file_path, 'w+', encoding='utf-8') as output_test_ref_file:
-                    output_test_ref_file.writelines(test_refs)
-                test_hypo_werdurs = []
-                test_refs = []
+            if len(train_hypo_werdurs) >= MAX_CORPUS_NUM:
+                write_split_align_result("train", train_output_file_idx, train_hypo_werdurs, train_refs)
+                train_output_file_idx = train_output_file_idx + 1
+                train_hypo_werdurs.clear()
+                train_refs.clear()
+            if len(valid_hypo_werdurs) >= MAX_CORPUS_NUM:
+                write_split_align_result("valid", valid_output_file_idx, valid_hypo_werdurs, valid_refs)
+                valid_output_file_idx = valid_output_file_idx + 1
+                valid_hypo_werdurs.clear()
+                valid_refs.clear()
+            if len(test_hypo_werdurs) > MAX_CORPUS_NUM:
+                write_split_align_result("test", test_output_file_idx, test_hypo_werdurs, test_refs)
+                test_output_file_idx = test_output_file_idx + 1
+                test_hypo_werdurs.clear()
+                test_refs.clear()
 
         if len(train_hypo_werdurs) > 0:
-            with open(output_train_hypo_file_path, 'w+', encoding='utf-8') as output_train_hypo_file:
-                output_train_hypo_file.writelines(train_hypo_werdurs)
-            with open(output_train_ref_file_path, 'w+', encoding='utf-8') as output_train_ref_file:
-                output_train_ref_file.writelines(train_refs)
+            write_split_align_result("train", train_output_file_idx, train_hypo_werdurs, train_refs)
+            train_output_file_idx = train_output_file_idx + 1
         if len(valid_hypo_werdurs) > 0:
-            with open(output_valid_hypo_file_path, 'w+', encoding='utf-8') as output_valid_hypo_file:
-                output_valid_hypo_file.writelines(valid_hypo_werdurs)
-            with open(output_valid_ref_file_path, 'w+', encoding='utf-8') as output_valid_ref_file:
-                output_valid_ref_file.writelines(valid_refs)
+            write_split_align_result("valid", valid_output_file_idx, valid_hypo_werdurs, valid_refs)
+            valid_output_file_idx = valid_output_file_idx + 1
         if len(test_hypo_werdurs) > 0:
-            with open(output_test_hypo_file_path, 'w+', encoding='utf-8') as output_test_hypo_file:
-                output_test_hypo_file.writelines(test_hypo_werdurs)
-            with open(output_test_ref_file_path, 'w+', encoding='utf-8') as output_test_ref_file:
-                output_test_ref_file.writelines(test_refs)
+            write_split_align_result("test", test_output_file_idx, test_hypo_werdurs, test_refs)
+            test_output_file_idx = test_output_file_idx + 1
 
