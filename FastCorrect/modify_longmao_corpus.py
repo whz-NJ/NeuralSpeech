@@ -2,9 +2,13 @@ import os
 import codecs
 import cn2an
 
-sports_asr_root_dir = "/root/noised_sports_corpus4" #包含从aiui系统导出的语料 aiui_football.txt
+# sports_asr_root_dir = "/root/noised_sports_corpus4"
+# aiui_football_asr_root_dir = "/root/noised_aiui_football2"
+# std_aiui_football_asr_root_dir = "/root/std_noised_aiui_football2"
 
-#sports_asr_root_dir = r'C:\Code\NeuralSpeech\FastCorrect\test'
+sports_asr_root_dir =r'C:\Code\NeuralSpeech\FastCorrect\noised_sports_corpus4'
+aiui_football_asr_root_dir = r'C:\Code\NeuralSpeech\FastCorrect\noised_aiui_football2'
+std_aiui_football_asr_root_dir = r'C:\Code\NeuralSpeech\FastCorrect\std_noised_aiui_football2'
 
 cn_digit_map = {}
 cn_digit_map['零'] = '0'
@@ -180,4 +184,6 @@ def preprocess_sports_asr(root_dir):
 # print(s2)
 # print(s1==s2)
 preprocess_sports_asr(sports_asr_root_dir)
+preprocess_sports_asr(aiui_football_asr_root_dir)
+preprocess_sports_asr(std_aiui_football_asr_root_dir)
 #asr_replace_func(r"C:\Code\NeuralSpeech\FastCorrect\test\cba.txt", r"C:\Code\NeuralSpeech\FastCorrect\test2")

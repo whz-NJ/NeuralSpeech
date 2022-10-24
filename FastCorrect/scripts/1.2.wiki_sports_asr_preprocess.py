@@ -10,11 +10,12 @@ wiki_data_path = '/root/extracted/AA'
 wiki_data_names = ['zh_wiki_00', 'zh_wiki_01', 'zh_wiki_02']
 std_wiki_data_root_dir = '/root/std_wiki'
 
-# sports_asr_root_dir = "/root/sports_corpus_en3" #包含从aiui系统导出的语料 aiui_football.txt
-# std_sports_asr_root_dir = "/root/std_sports_corpus_en3"
+sports_asr_root_dir = r'C:\Code\NeuralSpeech\FastCorrect\noised_sports_corpus4'
+std_sports_asr_root_dir = r'C:\Code\NeuralSpeech\FastCorrect\std_noised_sports_corpus4'
 
-sports_asr_root_dir = r'C:\Code\NeuralSpeech\FastCorrect\sport_corpus_en3'
-std_sports_asr_root_dir = r'C:\Code\NeuralSpeech\FastCorrect\std_sport_corpus_en3'
+aiui_football_asr_root_dir = r'C:\Code\NeuralSpeech\FastCorrect\noised_aiui_football2'
+# 这个脚本必须一次执行完，不能执行到中途停止，重新执行，这样可能会把 std_*_asr.txt 文件清空
+std_aiui_football_asr_root_dir = r'C:\Code\NeuralSpeech\FastCorrect\std_noised_aiui_football2' #已经存在一版龙猫已经标注好的标注语料
 
 def wiki_replace_func(input_file_path, output_file_dir):
     input_file_name = os.path.basename(input_file_path)
@@ -45,7 +46,10 @@ def wiki_replace_func(input_file_path, output_file_dir):
     outfile.close()
 
 MIN_RULE_TOKEN_COUNT = 10000
-def asr_replace_func(input_file_path, output_file_dir):
+def asr_replace_func(input_file_path, output_file_dir, ref_hypos_map):
+    if not ref_hypos_map:
+        ref_hypos_map = {}
+
     input_file_name = os.path.basename(input_file_path)
     if not os.path.isdir(output_file_dir):
         os.makedirs(output_file_dir)
@@ -70,6 +74,9 @@ def asr_replace_func(input_file_path, output_file_dir):
                 continue
 
             for orig_sentence, hypo_sentence in zip(orig_sentences, hypo_sentences):
+                marked_hypos = ref_hypos_map.get(orig_sentence, [])
+                if hypo_sentence in marked_hypos:
+                    continue #跳过已经标注过的语料
                 sentences.append(orig_sentence + '\t' + hypo_sentence + '\n')
                 for token in orig_sentence.split():
                     # preprocess.normAndTokenize() 方法会统计各个token出现次数
@@ -102,9 +109,49 @@ def preprocess_sports_asr(root_dir, input_base_dir, output_base_dir):
             if file.startswith("std_"): #跳过输出文件
                 continue
             file_path = os.path.join(root, file)
-            common_sub_dir = root.replace(input_base_dir, "").lstrip("/")
+            common_sub_dir = root.replace(input_base_dir, "").lstrip("/").lstrip("\\")
             output_file_dir = os.path.join(output_base_dir, common_sub_dir)
-            asr_replace_func(file_path, output_file_dir) #运动语料出现的词语必须出现
+            asr_replace_func(file_path, output_file_dir, None) #运动语料出现的词语必须出现
+            print(f"{file_path} has been processed.")
+
+def merge_preprocess_aiui_football_asr(root_dir, input_base_dir, output_base_dir):
+    # 存储之前龙猫标注好的语料
+    file_name_ref_hypos_map = {}
+    for root,dirs,files in os.walk(output_base_dir):
+        for file in files:
+            if not file.endswith(".txt"):
+                continue
+            if not file.startswith("std_"): #跳过未标准化的文件
+                continue
+            ref_hypos_map = {}
+            std_asr_file_path = os.path.join(root, file)
+            with codecs.open(std_asr_file_path, 'r', 'utf-8') as myfile:
+                for line in myfile:
+                    fields = line.split("\t")
+                    if len(fields) != 2:
+                        continue
+                    ref = fields[0].strip()
+                    hypo = fields[1].strip()
+                    hypos = ref_hypos_map.get(ref, [])
+                    if hypo not in hypos:
+                        hypos.append(hypo)
+                    ref_hypos_map[ref] = hypos
+            file_name_ref_hypos_map[file[4:]] = ref_hypos_map
+    # 将ASR输出语料和龙猫标注语料合并
+    for root,dirs,files in os.walk(root_dir):
+        for file in files:
+            if not file.endswith(".txt"):
+                continue
+            if file.startswith("std_"): #跳过输出文件
+                continue
+            if file not in file_name_ref_hypos_map:
+                print("unknown aiui football asr file: " + file)
+                continue
+            ref_hypos_map = file_name_ref_hypos_map[file]
+            file_path = os.path.join(root, file)
+            common_sub_dir = root.replace(input_base_dir, "").lstrip("/").lstrip("\\")
+            output_file_dir = os.path.join(output_base_dir, common_sub_dir)
+            asr_replace_func(file_path, output_file_dir, ref_hypos_map) #运动语料出现的词语必须出现
             print(f"{file_path} has been processed.")
 
 def run():
@@ -140,11 +187,12 @@ def run():
 
     #处理各运动项目ASR转写出的语料
     preprocess_sports_asr(sports_asr_root_dir, sports_asr_root_dir, std_sports_asr_root_dir)
-
+    #将 aiui_football转写语料和龙猫标注语料合并
+    merge_preprocess_aiui_football_asr(aiui_football_asr_root_dir, aiui_football_asr_root_dir, std_aiui_football_asr_root_dir)
     #处理各wiki文件
-    for data_name in wiki_data_names:
-        wiki_replace_func(os.path.join(wiki_data_path, data_name), std_wiki_data_root_dir)
-        print('{0} has been processed.'.format(data_name))
+    # for data_name in wiki_data_names:
+    #     wiki_replace_func(os.path.join(wiki_data_path, data_name), std_wiki_data_root_dir)
+    #     print('{0} has been processed.'.format(data_name))
 
     #保存词表
     with codecs.open(os.path.join(std_sports_asr_root_dir, 'dict.CN_char.txt'), 'w', 'utf-8') as dictfile:

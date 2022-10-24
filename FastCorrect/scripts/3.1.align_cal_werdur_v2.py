@@ -60,7 +60,7 @@ def set_timeout(num, callback):
 def after_timeout():
     pass
 
-# @set_timeout(30, after_timeout)  # 30s limitation for align
+@set_timeout(30, after_timeout)  # 30s limitation for align
 def align_encoder(hypo_sen, ref_sen):
     werdur, _ = cal_wer_dur_v1.calculate_wer_dur_v1(hypo_sen, ref_sen, return_path_only=False)
     output_token_str = " ".join(hypo_sen)

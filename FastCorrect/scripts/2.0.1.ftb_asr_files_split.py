@@ -2,10 +2,11 @@ import os
 import codecs
 import random
 
-split_rate = [0.9, 0.05, 0.05]
+sports_split_rate = [0.95, 0.00, 0.05] # 558篇 (28篇测试)
+aiui_split_rate = [0.80, 0.20, 0.00] # 128篇 (25篇验证)
 # processed_corpus_root_dir = "/root/std_ftb_sports_corpus_en"
-processed_corpus_root_dir = "/root/std_noised_sports_corpus4"
-aiui_corpus_file_names = ["std_filename_aiui_football3_asr.txt", "std_noised_aiui_football3.txt"] #从aiui系统导出的语料
+std_sports_corpus_root_dir = "/root/std_noised_sports_corpus4"
+std_aiui_football_corpus_root_dir = "/root/std_noised_aiui_football2" #从aiui系统导出的语料
 
 def replace_dot_path(path):
     pwd = os.getcwd()
@@ -17,27 +18,27 @@ def replace_dot_path(path):
     else:
         result = path
     return result
-processed_corpus_root_dir = replace_dot_path(processed_corpus_root_dir)
+std_sports_corpus_root_dir = replace_dot_path(std_sports_corpus_root_dir)
 
 train_asr_output_file_name = "train_std_noised_corpus.txt"
-train_asr_output_file_path = os.path.join(processed_corpus_root_dir, train_asr_output_file_name)
+train_asr_output_file_path = os.path.join(std_sports_corpus_root_dir, train_asr_output_file_name)
 if os.path.isfile(train_asr_output_file_path):
     os.remove(train_asr_output_file_path)
 valid_asr_output_file_name = "valid_std_noised_corpus.txt"
-valid_asr_output_file_path = os.path.join(processed_corpus_root_dir, valid_asr_output_file_name)
+valid_asr_output_file_path = os.path.join(std_sports_corpus_root_dir, valid_asr_output_file_name)
 if os.path.isfile(valid_asr_output_file_path):
     os.remove(valid_asr_output_file_path)
 test_asr_output_file_name = "test_std_noised_corpus.txt"
-test_asr_output_file_path = os.path.join(processed_corpus_root_dir, test_asr_output_file_name)
+test_asr_output_file_path = os.path.join(std_sports_corpus_root_dir, test_asr_output_file_name)
 if os.path.isfile(test_asr_output_file_path):
     os.remove(test_asr_output_file_path)
 
 train_file_paths = []
 valid_file_paths = []
 test_file_paths = []
-def splitTrainValidTest(root_dir):
+def splitTrainValidTest(root_dir, split_rate):
     for root,dirs,files in os.walk(root_dir):
-        if root == processed_corpus_root_dir:
+        if root == std_sports_corpus_root_dir:
             continue
         if root.find('五大联赛') == -1 and root.find('世界杯') == -1:#只处理足球相关语料
             continue
@@ -50,10 +51,6 @@ def splitTrainValidTest(root_dir):
             continue
         valid_files_num = int(split_rate[1]*float(len(valid_files)))
         test_files_num = int(split_rate[2]*float(len(valid_files)))
-        if valid_files_num == 0:
-            valid_files_num = 1
-        if test_files_num == 0:
-            test_files_num = 1
 
         train_files_num = len(valid_files) - valid_files_num - test_files_num
         if train_files_num <= 0:
@@ -66,63 +63,30 @@ def splitTrainValidTest(root_dir):
         with open(train_asr_output_file_path, "a+", encoding='utf-8') as train_file:
             train_file.writelines(corpus_asr_lines)
 
-        corpus_asr_lines = []
-        for file in valid_files[train_files_num:train_files_num + valid_files_num]:
-            valid_file_paths.append(os.path.join(root, file) + "\n")
-            with open(os.path.join(root, file), 'r', encoding='utf-8') as corpus_file:
-                corpus_asr_lines.extend(corpus_file.readlines())
-        with open(valid_asr_output_file_path, "a+", encoding='utf-8') as valid_file:
-            valid_file.writelines(corpus_asr_lines)
+        if valid_files_num > 0:
+            corpus_asr_lines = []
+            for file in valid_files[train_files_num:train_files_num + valid_files_num]:
+                valid_file_paths.append(os.path.join(root, file) + "\n")
+                with open(os.path.join(root, file), 'r', encoding='utf-8') as corpus_file:
+                    corpus_asr_lines.extend(corpus_file.readlines())
+            with open(valid_asr_output_file_path, "a+", encoding='utf-8') as valid_file:
+                valid_file.writelines(corpus_asr_lines)
 
-        corpus_asr_lines = []
-        for file in valid_files[train_files_num + valid_files_num:]:
-            test_file_paths.append(os.path.join(root, file) + "\n")
-            with open(os.path.join(root, file), 'r', encoding='utf-8') as corpus_file:
-                corpus_asr_lines.extend(corpus_file.readlines())
-        with open(test_asr_output_file_path, "a+", encoding='utf-8') as test_file:
-            test_file.writelines(corpus_asr_lines)
+        if test_files_num > 0:
+            corpus_asr_lines = []
+            for file in valid_files[train_files_num + valid_files_num:]:
+                test_file_paths.append(os.path.join(root, file) + "\n")
+                with open(os.path.join(root, file), 'r', encoding='utf-8') as corpus_file:
+                    corpus_asr_lines.extend(corpus_file.readlines())
+            with open(test_asr_output_file_path, "a+", encoding='utf-8') as test_file:
+                test_file.writelines(corpus_asr_lines)
 
-def splitTrainValidTest_aiui():
-    corpus_asr_lines = []
-    for file in aiui_corpus_file_names:
-        with open(os.path.join(processed_corpus_root_dir, file), 'r', encoding='utf-8') as corpus_file:
-            corpus_asr_lines.extend(corpus_file.readlines())
-    corpuse_nums = len(corpus_asr_lines)
-    train_stop_index = int(corpuse_nums * split_rate[0])
-    valid_stop_index = int(corpuse_nums * (split_rate[0] + split_rate[1]))
-    corpus_indexes = list(range(corpuse_nums))
-    random.shuffle(corpus_indexes) #顺序打乱
+splitTrainValidTest(std_sports_corpus_root_dir, sports_split_rate)
+splitTrainValidTest(std_aiui_football_corpus_root_dir, aiui_split_rate)
 
-    # 抽取训练集数据
-    corpus_lines = []
-    for idx in corpus_indexes[0:train_stop_index]:
-        ref_hypo = corpus_asr_lines[idx].strip() + "\n"
-        corpus_lines.append(ref_hypo)
-    with open(train_asr_output_file_path, "a+", encoding='utf-8') as train_file:
-        train_file.writelines(corpus_lines)
-
-    # 抽取验证集数据
-    corpus_lines = []
-    for idx in corpus_indexes[train_stop_index:valid_stop_index]:
-        ref_hypo = corpus_asr_lines[idx].strip() + "\n"
-        corpus_lines.append(ref_hypo)
-    with open(valid_asr_output_file_path, "a+", encoding='utf-8') as valid_file:
-        valid_file.writelines(corpus_lines)
-
-    # 抽取测试集数据
-    corpus_lines = []
-    for idx in corpus_indexes[valid_stop_index:]:
-        ref_hypo = corpus_asr_lines[idx].strip() + "\n"
-        corpus_lines.append(ref_hypo)
-    with open(test_asr_output_file_path, "a+", encoding='utf-8') as test_file:
-        test_file.writelines(corpus_lines)
-
-splitTrainValidTest_aiui()
-splitTrainValidTest(processed_corpus_root_dir)
-
-train_file_paths_file_path = os.path.join(processed_corpus_root_dir, "train_file_paths.txt")
-valid_file_paths_file_path = os.path.join(processed_corpus_root_dir, "valid_file_paths.txt")
-test_file_paths_file_path = os.path.join(processed_corpus_root_dir, "test_file_paths.txt")
+train_file_paths_file_path = os.path.join(std_sports_corpus_root_dir, "train_file_paths.txt")
+valid_file_paths_file_path = os.path.join(std_sports_corpus_root_dir, "valid_file_paths.txt")
+test_file_paths_file_path = os.path.join(std_sports_corpus_root_dir, "test_file_paths.txt")
 with open(train_file_paths_file_path, "w", encoding='utf-8') as train_file_paths_file:
     train_file_paths_file.writelines(train_file_paths)
 with open(valid_file_paths_file_path, "w", encoding='utf-8') as valid_file_paths_file:

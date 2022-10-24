@@ -1,16 +1,16 @@
-导出aiui的 aiui_ist_sentence 表记录，执行 CorpusExtrator.java 抽取语料（得到 noised_aiui_football3.txt 和 filename_aiui_football3.txt 文件）
-执行 gen_sports_corpus_txt.py 抽取龙猫语料，转换为标准化格式的 .txt 文件（包括 noised_aiui_football3.txt 和 filename_aiui_football3.txt 文件）
-执行 IstNoiseGenerator.java 将语料(docx和filename_aiui_football3.txt)通过 tts/ist 处理，得到原始语料、ASR转写语料对 (要求每行输入是单句，因为IstNoiseGenerator不分句)
-执行 modify_longmao_corpus.py 调整龙猫语料中的数字风格、逗号风格（统一为中文逗号，句末的逗号统一不要），保持和ASR模型一致（包括 noised_aiui_football3.txt 和 filename_aiui_football3_asr.txt 文件）
-执行 wiki_sports_asr_preprocess.py 将wiki、运动语料标准化，并抽取字典 (std_sports_corpus_en 目录)，手工拷贝到 dictionary目录
-执行 EnWordsNoiseGenerator.java 得到字典中包含的英文单词的纠错集
-执行 short_dictionary_corrections.py 精简词表（先取字典的前4万个词，再看这4万个词讯飞误转词，一起加入词表）
+本地导出aiui的 aiui_ist_sentence 表记录，执行 CorpusExtrator.java 抽取语料
+本地执行 gen_sports_corpus_txt.py 抽取龙猫语料，转换为标准化格式的 .txt 文件
+本地执行 IstNoiseGenerator.java 将语料(docx和aiui_football)通过 tts/ist 处理，得到原始语料、ASR转写语料对 (要求每行输入是单句，因为IstNoiseGenerator不分句)
+本地执行 modify_longmao_corpus.py 调整龙猫语料（包括 aiui_football 文件）中的数字风格保持和ASR模型一致
+本地执行 wiki_sports_asr_preprocess.py 将wiki、运动语料标准化，并抽取字典 (std_sports_corpus_en 目录)，手工拷贝到 dictionary目录
+本地执行 EnWordsNoiseGenerator.java 得到字典中包含的英文单词的纠错集
+本地执行 short_dictionary_corrections.py 精简词表（先取字典的前4万个词，再看这4万个词讯飞误转词，一起加入词表）
 # 执行五遍 align_split_noise_std_wiki.py 给wiki语料添加不同噪声，并划分训练/测试/验证集，并对齐（运动语料经过ASR转写已经带有噪声了）
-执行五遍 split_align_noise_std_wiki.py 给wiki语料添加不同噪声，并划分训练/测试/验证集，并对齐（运动语料经过ASR转写已经带有噪声了。在测试环境 11/12/14/16/17上执行）
-执行 ftb_asr_files_split.py 将运动语料拆分为训练集、验证集、测试集
-执行 gen_hypo_ref_file.py 将运动语料分成 hypo* 和 ref* 文件。
-执行 align_cal_werdur_v2.py 对齐运动语料 hypo* 和 ref* 文件
-执行下面命令，构造二进制化需要的数据文件：
+本地执行五遍 split_align_noise_std_wiki.py 给wiki语料添加不同噪声，并划分训练/测试/验证集，并对齐（运动语料经过ASR转写已经带有噪声了。在测试环境 11/12/14/16/17上执行）
+九天执行 ftb_asr_files_split.py 将运动语料拆分为训练集、验证集、测试集
+九天执行 gen_hypo_ref_file.py 将运动语料分成 hypo* 和 ref* 文件。
+九天执行 align_cal_werdur_v2.py 对齐运动语料 hypo* 和 ref* 文件
+九天执行下面命令，构造二进制化需要的数据文件：
     cp hypo_train_std_noised_corpus.txt.src.werdur.full train.zh_CN
     cp ref_train_std_noised_corpus.txt.tgt train.zh_CN_tgt
     cp hypo_valid_std_noised_corpus.txt.src.werdur.full valid.zh_CN
@@ -55,34 +55,14 @@
 	cat ref_test_std_noised5_corpus.tgt >> test.zh_CN_tgt
 	cat ref_test_std_noised3_corpus.tgt >> test.zh_CN_tgt
 	cat ref_test_std_noised1_corpus.tgt >> test.zh_CN_tgt
-执行 data-gen.sh 将对齐结果二进制化
-执行 train_pretrain.sh 训练模型
-执行 train_ft.sh 对模型微调
-执行 gen_asr_eval_data.py 生成测试集的 data.json
-执行 test_ft.sh 得到 /root/fastcorrect/asr_eval_data 目录test或dev子目录下数据的模型预测效果（即生成 data.json）
-执行 cal_wer_asr.sh 展示模型在验证集上的效果（因为输入是个data.json文件路径，这个路径可以是原始ASR输出或模型输出，结果存储在 wer_short.txt ）
-部署到阿里云，执行 call_fc_gen_json.py 脚本，验证未学习语料效果。
+九天执行 data-gen.sh 将对齐结果二进制化
+九天执行 train_pretrain.sh 训练模型
+九天执行 train_ft.sh 对模型微调
+九天执行 gen_asr_eval_data.py 生成测试集的 data.json
+九天执行 test_ft.sh 得到 /root/fastcorrect/asr_eval_data 目录test或dev子目录下数据的模型预测效果（即生成 data.json）
+九天执行 cal_wer_asr.sh 展示模型在验证集上的效果（因为输入是个data.json文件路径，这个路径可以是原始ASR输出或模型输出，结果存储在 wer_short.txt ）
+部署到阿里云，本地执行 call_fc_gen_json.py 脚本，验证未学习语料效果。
 
-下面可以在 公有云机器上执行：
-(新增) 执行 asr_files_split.py 将转写语料划分为训练集、验证集、测试集
-执行 asr_preprocess.py 将转写语料标准化
-执行 gen_hypo_ref_file.py 将标准化的语料分割为 hypo* 和 ref* 文件。
-执行 align_cal_werdur_v2.py 对齐 hypo* 和 ref* 文件
-将 data/werdur_data_aishell 和体育语料合并:
-   cd /root/sports_aishell_corpus
-   cat ~/sports_corpus2/hypo_std_train_noised_corpus.txt.src.werdur.full >> train.zh_CN
-   cat ~/sports_corpus2/ref_std_train_noised_corpus.txt.tgt >> train.zh_CN_tgt
-   cat ~/sports_corpus2/hypo_std_valid_noised_corpus.txt.src.werdur.full >> valid.zh_CN
-   cat ~/sports_corpus2/ref_std_valid_noised_corpus.txt.tgt >> valid.zh_CN_tgt
-
-
-下面操作需要在GPU机器上执行：
-执行 split_train_valid_test.py 分割训练集、验证集、测试集 (前面调用了 asr_files_split.py 后，这里就不需要执行了)
-执行 data-gen.sh 将对齐结果二进制化
-执行 train_ft.sh 对模型微调
-执行 gen_asr_eval_data.py 生成验证集、测试集的 data.json
-执行 test_ft.sh 得到 /root/fastcorrect/asr_eval_data 目录test或dev子目录下数据的模型预测效果
-执行 cal_wer_aishell.sh 展示模型在验证集上的效果
 
 千万不要犯把龙猫语料做fc纠错，再和龙猫比的错误。
 应该用讯飞转写再fc纠错，再和原始龙猫比较。
