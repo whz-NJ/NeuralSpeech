@@ -7,8 +7,10 @@ import cn2an
 # std_aiui_football_asr_root_dir = "/root/std_noised_aiui_football2"
 
 sports_asr_root_dir =r'C:\Code\NeuralSpeech\FastCorrect\noised_sports_corpus4'
-aiui_football_asr_root_dir = r'C:\Code\NeuralSpeech\FastCorrect\noised_aiui_football2'
-std_aiui_football_asr_root_dir = r'C:\Code\NeuralSpeech\FastCorrect\std_noised_aiui_football2'
+# aiui_football_asr_root_dir = r'C:\Code\NeuralSpeech\FastCorrect\noised_aiui_football2'
+# std_aiui_football_asr_root_dir = r'C:\Code\NeuralSpeech\FastCorrect\std_noised_aiui_football2'
+aiui_football_asr_root_dir = r'C:\Code\NeuralSpeech\FastCorrect\noised_aiui_football4'
+std_aiui_football_asr_root_dir = r'C:\Code\NeuralSpeech\FastCorrect\std_noised_aiui_football4'
 
 cn_digit_map = {}
 cn_digit_map['零'] = '0'

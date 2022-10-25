@@ -76,9 +76,9 @@ for input_tsv in [os.path.join(commonset_dir, f, "data.json") for f in short_set
     translated_output_dict = {}
     processed_items = 0
     for k, v in translate_input_dict.items():
-        text = v[0] #ASR识别结果
+        text = v[0] #ASR识别结果（value中的第一个元素）
         #print(text)
-        gt = v[1] #原始语料
+        gt = v[1] #原始语料value中的第二个元素）
         start_time = time.time()
         time_ok = False
         try:
@@ -93,6 +93,7 @@ for input_tsv in [os.path.join(commonset_dir, f, "data.json") for f in short_set
                 all_time.append(translated[1])
                 time_ok = True
                 translated = translated[0]
+            # text：ASR识别结果，gt：原始的正确语料 translated：fc纠错结果
             translated_output_dict[k] = (text, gt, translated)
         except Exception as e:
             print(input_tsv + "\t" + text + "\n")

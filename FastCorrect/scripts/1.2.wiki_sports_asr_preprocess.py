@@ -13,9 +13,9 @@ std_wiki_data_root_dir = '/root/std_wiki'
 sports_asr_root_dir = r'C:\Code\NeuralSpeech\FastCorrect\noised_sports_corpus4'
 std_sports_asr_root_dir = r'C:\Code\NeuralSpeech\FastCorrect\std_noised_sports_corpus4'
 
-aiui_football_asr_root_dir = r'C:\Code\NeuralSpeech\FastCorrect\noised_aiui_football2'
-# 这个脚本必须一次执行完，不能执行到中途停止，重新执行，这样可能会把 std_*_asr.txt 文件清空
-std_aiui_football_asr_root_dir = r'C:\Code\NeuralSpeech\FastCorrect\std_noised_aiui_football2' #已经存在一版龙猫已经标注好的标注语料
+aiui_football_asr_root_dir = r'C:\Code\NeuralSpeech\FastCorrect\noised_aiui_football4'
+# TODO 注意： 这个脚本必须一次执行完，不能执行到中途停止，重新执行，这样可能会把 std_*_asr.txt 文件清空
+std_aiui_football_asr_root_dir = r'C:\Code\NeuralSpeech\FastCorrect\std_noised_aiui_football4' #已经存在一版龙猫已经标注好的标注语料
 
 def wiki_replace_func(input_file_path, output_file_dir):
     input_file_name = os.path.basename(input_file_path)
@@ -56,7 +56,7 @@ def asr_replace_func(input_file_path, output_file_dir, ref_hypos_map):
     outfile = codecs.open(output_file_dir + '/std_' + input_file_name, 'w', 'utf-8')
 
     with codecs.open(input_file_path, 'r', 'utf-8') as myfile:
-        sentences = []
+        # sentences = []
         for line in myfile:
             if len(line) == 0 or line.isspace():
                 continue
@@ -67,7 +67,6 @@ def asr_replace_func(input_file_path, output_file_dir, ref_hypos_map):
             hypo_sentence = fields[1]
             if len(orig_sentence) == 0 or len(hypo_sentence) == 0:
                 continue
-            # 不分句，这样正确语料才能包含，,、尽可能展示转写过程可能的正确语句
             orig_sentences = preprocess.normAndTokenize(orig_sentence, min_sentence_len=2, split_sentences=True)
             hypo_sentences = preprocess.normAndTokenize(hypo_sentence, min_sentence_len=2, split_sentences=True)
             if len(orig_sentences) == 0 or len(hypo_sentences) == 0 or len(orig_sentences) != len(hypo_sentences):
@@ -77,7 +76,9 @@ def asr_replace_func(input_file_path, output_file_dir, ref_hypos_map):
                 marked_hypos = ref_hypos_map.get(orig_sentence, [])
                 if hypo_sentence in marked_hypos:
                     continue #跳过已经标注过的语料
-                sentences.append(orig_sentence + '\t' + hypo_sentence + '\n')
+                marked_hypos.append(hypo_sentence)
+                ref_hypos_map[orig_sentence] = marked_hypos
+                # sentences.append(orig_sentence + '\t' + hypo_sentence + '\n')
                 for token in orig_sentence.split():
                     # preprocess.normAndTokenize() 方法会统计各个token出现次数
                     count = preprocess.tokens_count_dict.get(token, 0)
@@ -92,9 +93,10 @@ def asr_replace_func(input_file_path, output_file_dir, ref_hypos_map):
                         continue
                     # token一定要出现在词表中
                     preprocess.tokens_count_dict[token] = MIN_RULE_TOKEN_COUNT + count
-            if len(sentences) >= 10000:
-                outfile.writelines(sentences)
-                sentences = []
+        sentences = []
+        for ref,hypos in ref_hypos_map.items():
+            for hypo in hypos:
+                sentences.append(ref + "\t" + hypo + "\n")
         #文件扫描结束
         if len(sentences) > 0:
             outfile.writelines(sentences)

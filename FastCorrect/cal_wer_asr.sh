@@ -42,12 +42,14 @@ cal_wer() {
   cat ${result_dir}/wer_short_2point.txt
 }
 
+#统计ASR准确率
 for set_name in ${sets}
 do
   result_dir=${asr_data_dir}/${set_name}
   cal_wer "asr_${set_name}" "${result_dir}"
 done
 
+#统计模型纠错后的准确率
 for epoch in ${epochs}
 do
   for set_name in ${sets}

@@ -9,9 +9,12 @@ sports_corpus_root_dir = "../sports_corpus"
 processed_sports_corpus_root_dir = "../sports_corpus5"
 # corpus_root_dir = r"C:\Users\OS\Desktop\足球"
 # processed_corpus_root_dir = r"C:\Users\OS\Desktop\足球2"
-aiui_football_dir = "../noised_aiui_football"
-processed_aiui_football_dir = "../aiui_football2"
-std_aiui_football_dir = "../std_noised_aiui_football2" #保存标准化后的正确语料-ASR语料对列表文件的目录
+# aiui_football_dir = "../noised_aiui_football"
+# processed_aiui_football_dir = "../aiui_football2"
+# std_aiui_football_dir = "../std_noised_aiui_football2" #保存标准化后的正确语料-ASR语料对列表文件的目录
+aiui_football_dir = "../noised_aiui_football3"
+processed_aiui_football_dir = "../aiui_football4"
+std_aiui_football_dir = "../std_noised_aiui_football4" #保存标准化后的正确语料-ASR语料对列表文件的目录
 
 def replace_dot_path(path):
     result = ""
@@ -110,42 +113,43 @@ def loadAiuiFootballCorpus(root_dir):
     for root,dirs,files in os.walk(root_dir):
         for file in files:
             file_path = os.path.join(root, file)
-            if not file.endswith("_asr.txt"): #只有正确语料
-                saved_corpus_path = file_path.replace(aiui_football_dir, processed_aiui_football_dir)
-                saved_corpus_dir = os.path.dirname(saved_corpus_path)
-            else: #有正确语料和ASR输出语料
+            if file.endswith("_asr.txt"): #有正确语料和ASR输出语料(但未标准化/分句)
                 saved_corpus_path = file_path.replace(aiui_football_dir, std_aiui_football_dir)
                 saved_corpus_dir = os.path.dirname(saved_corpus_path)
                 # 原文件名前面加上 std_ 前缀
                 saved_corpus_file_name = "std_" + os.path.basename(saved_corpus_path)
                 saved_corpus_path = os.path.join(saved_corpus_dir, saved_corpus_file_name)
+            else: #只有正确语料(但未标准化/分句)
+                saved_corpus_path = file_path.replace(aiui_football_dir, processed_aiui_football_dir)
+                saved_corpus_dir = os.path.dirname(saved_corpus_path)
             if not os.path.exists(saved_corpus_dir):
                 os.makedirs(saved_corpus_dir)
 
             corpus_list = []
             with open(file_path, 'r', encoding='utf-8') as infile:
-                    if not file.endswith("_asr.txt"): #只有正确语料
-                        print("file=" +file)
-                        for line in infile.readlines():
-                            corpus = line.strip()
-                            sentences = preprocess.normAndTokenize(corpus, min_sentence_len=2, split_sentences=True)
-                            for sentence in sentences:
-                                sentence = sentence.replace(" ", "") #删除中间的空格
-                                corpus_list.append(sentence + "\n")
-                    else: #有正确语料和ASR输出语料
+                    if file.endswith("_asr.txt"): #有正确语料和ASR输出语料，开始标准化/分句
                         for line in infile.readlines():
                             fields = line.split("\t")
                             if len(fields) != 2:
                                 continue
                             ref_sentences = fields[0]
                             hypo_sentences = fields[1]
-                            ref_sentences = preprocess.normAndTokenize(ref_sentences, min_sentence_len=2, split_sentences=True)
-                            hypo_sentences = preprocess.normAndTokenize(hypo_sentences, min_sentence_len=2, split_sentences=True)
+                            ref_sentences = preprocess.normAndTokenize(ref_sentences, min_sentence_len=2,
+                                                                       split_sentences=True)
+                            hypo_sentences = preprocess.normAndTokenize(hypo_sentences, min_sentence_len=2,
+                                                                        split_sentences=True)
                             if not ref_sentences or not hypo_sentences or len(ref_sentences) != len(hypo_sentences):
                                 continue
-                            for ref_sentence,hypo_sentence in zip(ref_sentences, hypo_sentences):
+                            for ref_sentence, hypo_sentence in zip(ref_sentences, hypo_sentences):
                                 ref_hypo = ref_sentence + "\t" + hypo_sentence
                                 corpus_list.append(ref_hypo + "\n")
+                    else: #只有正确语料，开始标准化/分句
+                        for line in infile.readlines():
+                            corpus = line.strip()
+                            sentences = preprocess.normAndTokenize(corpus, min_sentence_len=2, split_sentences=True)
+                            for sentence in sentences:
+                                sentence = sentence.replace(" ", "") #删除中间的空格
+                                corpus_list.append(sentence + "\n")
             with open(saved_corpus_path, 'w', encoding='utf-8') as outfile:
                 outfile.writelines(corpus_list)
 

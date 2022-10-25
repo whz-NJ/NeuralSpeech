@@ -393,7 +393,7 @@ for input_file_name in input_file_names:
             if not line:
                 continue
             filt_sentence, werdurs, new_tokens = noise_sentence(line)
-            if new_tokens and werdurs and len(new_tokens) == len(new_tokens): # 一句处理完成（一行有一句）
+            if len(new_tokens) > 1: # 一句处理完成（一行有一句）
                 hypo_werdur = " ".join(new_tokens) + " |||| " + " ".join([str(w) for w in werdurs]) + '\n'
                 ref = filt_sentence + "\n"
                 set_op = np.random.choice(set_ops, p=split_rate)

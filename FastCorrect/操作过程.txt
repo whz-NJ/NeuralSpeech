@@ -1,12 +1,13 @@
-本地导出aiui的 aiui_ist_sentence 表记录，执行 CorpusExtrator.java 抽取语料
-本地执行 gen_sports_corpus_txt.py 抽取龙猫语料，转换为标准化格式的 .txt 文件
-本地执行 IstNoiseGenerator.java 将语料(docx和aiui_football)通过 tts/ist 处理，得到原始语料、ASR转写语料对 (要求每行输入是单句，因为IstNoiseGenerator不分句)
-本地执行 modify_longmao_corpus.py 调整龙猫语料（包括 aiui_football 文件）中的数字风格保持和ASR模型一致
-本地执行 wiki_sports_asr_preprocess.py 将wiki、运动语料标准化，并抽取字典 (std_sports_corpus_en 目录)，手工拷贝到 dictionary目录
+本地导出aiui的 aiui_ist_sentence 表记录，执行 CorpusExtrator.java 抽取语料，输出 noised_aiui_football/五大联赛 目录下 *.txt 和 *_asr.txt 文件
+本地执行 gen_sports_corpus_txt.py 抽取龙猫语料，转换为标准化格式的 .txt 文件，其中 aiui 语料分成2部分：aiui_football2 目录下的分句标准化的正确文本、std_noised_aiui_football2 目录下标准化的正确文本-asr转写文本
+本地执行 IstNoiseGenerator.java 将语料(docx和aiui_football)通过 tts/ist 处理，得到原始语料、ASR转写语料对(要求每行输入是单句，因为IstNoiseGenerator不分句)，aiui语料保存在 noised_aiui_football2 目录
+本地执行 modify_longmao_corpus.py 调整龙猫语料（包括 aiui_football 文件）中的数字风格保持和ASR模型一致，其中aiui语料分布在2个目录： noised_aiui_football2 和 std_noised_aiui_football2
+本地执行 wiki_sports_asr_preprocess.py 将wiki标准化，运动语料合并标准化，并抽取字典 (std_sports_corpus_en 目录)，手工拷贝到 dictionary目录
 本地执行 EnWordsNoiseGenerator.java 得到字典中包含的英文单词的纠错集
 本地执行 short_dictionary_corrections.py 精简词表（先取字典的前4万个词，再看这4万个词讯飞误转词，一起加入词表）
 # 执行五遍 align_split_noise_std_wiki.py 给wiki语料添加不同噪声，并划分训练/测试/验证集，并对齐（运动语料经过ASR转写已经带有噪声了）
 本地执行五遍 split_align_noise_std_wiki.py 给wiki语料添加不同噪声，并划分训练/测试/验证集，并对齐（运动语料经过ASR转写已经带有噪声了。在测试环境 11/12/14/16/17上执行）
+九天执行 stat_word_err_rate.py 统计运动语料的错误率（需要在5%以上）
 九天执行 ftb_asr_files_split.py 将运动语料拆分为训练集、验证集、测试集
 九天执行 gen_hypo_ref_file.py 将运动语料分成 hypo* 和 ref* 文件。
 九天执行 align_cal_werdur_v2.py 对齐运动语料 hypo* 和 ref* 文件
@@ -18,6 +19,7 @@
     cp hypo_test_std_noised_corpus.txt.src.werdur.full test.zh_CN
     cp ref_test_std_noised_corpus.txt.tgt test.zh_CN_tgt
 
+    执行下面命令或单独执行脚本 merge_skip_invalid_align_lines.py
 	cat hypo_train_std_noised9_corpus.full >> train.zh_CN
 	cat hypo_train_std_noised7_corpus.full >> train.zh_CN
 	cat hypo_train_std_noised5_corpus.full >> train.zh_CN
@@ -58,10 +60,11 @@
 九天执行 data-gen.sh 将对齐结果二进制化
 九天执行 train_pretrain.sh 训练模型
 九天执行 train_ft.sh 对模型微调
-九天执行 gen_asr_eval_data.py 生成测试集的 data.json
-九天执行 test_ft.sh 得到 /root/fastcorrect/asr_eval_data 目录test或dev子目录下数据的模型预测效果（即生成 data.json）
-九天执行 cal_wer_asr.sh 展示模型在验证集上的效果（因为输入是个data.json文件路径，这个路径可以是原始ASR输出或模型输出，结果存储在 wer_short.txt ）
-部署到阿里云，本地执行 call_fc_gen_json.py 脚本，验证未学习语料效果。
+九天执行 gen_asr_eval_data.py 生成测试集/验证集的 data.json，放在 /root/std_noised_sports_corpus4 的test或dev或hdc2子目录
+九天执行 test_ft.sh 根据 /root/std_noised_sports_corpus4 目录test或dev或hdc2子目录下数据的模型在不同epoch的预测效果（即生成 data.json）
+九天执行 cal_wer_asr.sh 展示模型在不同epoch的验证集/测试集上的纠错效果
+部署到阿里云，本地执行 call_fc_gen_json.py 脚本，验证未学习语料效果，得到各个asr原始和fc纠错语料的json文件
+上传asr原始和fc纠错语料的json文件到九天，九天执行cal_wer.sh脚本统计最终模型效果
 
 
 千万不要犯把龙猫语料做fc纠错，再和龙猫比的错误。
