@@ -19,7 +19,45 @@
     cp hypo_test_std_noised_corpus.txt.src.werdur.full test.zh_CN
     cp ref_test_std_noised_corpus.txt.tgt test.zh_CN_tgt
 
-    执行下面命令或单独执行脚本 merge_skip_invalid_align_lines.py
+    执行脚本 skip_invalid_align_lines.py 脚本，再执行下面命令：
+    rm -f train.zh_CN train.zh_CN_tgt valid.zh_CN valid.zh_CN_tgt test.zh_CN test.zh_CN_tgt
+    cat train01.zh_CN >> train.zh_CN
+    cat train03.zh_CN >> train.zh_CN
+    cat train05.zh_CN >> train.zh_CN
+    cat train07.zh_CN >> train.zh_CN
+    cat train09.zh_CN >> train.zh_CN
+
+    cat train01.zh_CN_tgt >> train.zh_CN_tgt
+    cat train03.zh_CN_tgt >> train.zh_CN_tgt
+    cat train05.zh_CN_tgt >> train.zh_CN_tgt
+    cat train07.zh_CN_tgt >> train.zh_CN_tgt
+    cat train09.zh_CN_tgt >> train.zh_CN_tgt
+
+    cat valid01.zh_CN >> valid.zh_CN
+    cat valid03.zh_CN >> valid.zh_CN
+    cat valid05.zh_CN >> valid.zh_CN
+    cat valid07.zh_CN >> valid.zh_CN
+    cat valid09.zh_CN >> valid.zh_CN
+
+    cat valid01.zh_CN_tgt >> valid.zh_CN_tgt
+    cat valid03.zh_CN_tgt >> valid.zh_CN_tgt
+    cat valid05.zh_CN_tgt >> valid.zh_CN_tgt
+    cat valid07.zh_CN_tgt >> valid.zh_CN_tgt
+    cat valid09.zh_CN_tgt >> valid.zh_CN_tgt
+
+    cat test01.zh_CN >> test.zh_CN
+    cat test03.zh_CN >> test.zh_CN
+    cat test05.zh_CN >> test.zh_CN
+    cat test07.zh_CN >> test.zh_CN
+    cat test09.zh_CN >> test.zh_CN
+
+    cat test01.zh_CN_tgt >> test.zh_CN_tgt
+    cat test03.zh_CN_tgt >> test.zh_CN_tgt
+    cat test05.zh_CN_tgt >> test.zh_CN_tgt
+    cat test07.zh_CN_tgt >> test.zh_CN_tgt
+    cat test09.zh_CN_tgt >> test.zh_CN_tgt
+
+    或：
 	cat hypo_train_std_noised9_corpus.full >> train.zh_CN
 	cat hypo_train_std_noised7_corpus.full >> train.zh_CN
 	cat hypo_train_std_noised5_corpus.full >> train.zh_CN
@@ -57,6 +95,7 @@
 	cat ref_test_std_noised5_corpus.tgt >> test.zh_CN_tgt
 	cat ref_test_std_noised3_corpus.tgt >> test.zh_CN_tgt
 	cat ref_test_std_noised1_corpus.tgt >> test.zh_CN_tgt
+
 九天执行 data-gen.sh 将对齐结果二进制化
 九天执行 train_pretrain.sh 训练模型
 九天执行 train_ft.sh 对模型微调
