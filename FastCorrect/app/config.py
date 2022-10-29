@@ -16,7 +16,7 @@ GPU_DEVICE = config['system']['GPU_DEVICE']
 
 # 日志配置
 LOG_PATH = config['log_info']['LOG_PATH']
-# the logging file for post server
+# the loggers file for post server
 IS_POST_SERVER = False
 LOG_PRE = ""
 

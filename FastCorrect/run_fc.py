@@ -2,12 +2,10 @@
 import json
 import sys
 import argparse
-import os
-import os.path
 import time
 from flask import Flask
 from flask import request, make_response
-from app.logging import error_logger, bs_logger as logger
+from loggers import bs_logger as logger
 from app.config import *
 from scripts import preprocess
 

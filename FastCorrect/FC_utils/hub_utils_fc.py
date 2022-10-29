@@ -7,9 +7,12 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import sys
+sys.path.append("..")
+from loggers import bs_logger as logger
+
 import argparse
 import copy
-import logging
 import os
 from typing import Any, Dict, Iterator, List, Tuple
 
@@ -18,9 +21,6 @@ from fairseq import utils
 from fairseq.data import encoders
 from torch import nn
 import time
-
-logger = logging.getLogger(__name__)
-
 
 def from_pretrained(
     model_name_or_path,

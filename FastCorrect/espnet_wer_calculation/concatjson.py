@@ -8,7 +8,7 @@
 import argparse
 import codecs
 import json
-import logging
+import loggers
 import sys
 
 from cli_utils import get_commandline_args
@@ -28,10 +28,10 @@ def get_parser():
 if __name__ == "__main__":
     args = get_parser().parse_args()
 
-    # logging info
+    # loggers info
     logfmt = "%(asctime)s (%(module)s:%(lineno)d) %(levelname)s: %(message)s"
-    logging.basicConfig(level=logging.INFO, format=logfmt)
-    logging.info(get_commandline_args())
+    loggers.basicConfig(level=loggers.INFO, format=logfmt)
+    loggers.info(get_commandline_args())
 
     # make intersection set for utterance keys
     js = {}
@@ -39,9 +39,9 @@ if __name__ == "__main__":
         with codecs.open(x, encoding="utf-8") as f:
             j = json.load(f)
         ks = j["utts"].keys()
-        logging.debug(x + ": has " + str(len(ks)) + " utterances")
+        loggers.debug(x + ": has " + str(len(ks)) + " utterances")
         js.update(j["utts"])
-    logging.info("new json has " + str(len(js.keys())) + " utterances")
+    loggers.info("new json has " + str(len(js.keys())) + " utterances")
 
     # ensure "ensure_ascii=False", which is a bug
     jsonstring = json.dumps(

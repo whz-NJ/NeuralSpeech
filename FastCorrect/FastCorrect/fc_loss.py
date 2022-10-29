@@ -88,7 +88,7 @@ class FastCorrectCriterion(FairseqCriterion):
         Returns a tuple with three elements:
         1) the loss
         2) the sample size, which is used as the denominator for the gradient
-        3) logging outputs to display while training
+        3) loggers outputs to display while training
         """
         nsentences, ntokens = sample["nsentences"], sample["ntokens"]
 
@@ -138,7 +138,7 @@ class FastCorrectCriterion(FairseqCriterion):
         #    print(l['name'], l['loss'], utils.item(l["loss"].data / l["factor"]))
         # NOTE:
         # we don't need to use sample_size as denominator for the gradient
-        # here sample_size is just used for logging
+        # here sample_size is just used for loggers
         sample_size = 1
         logging_output = {
             "loss": loss.data,
@@ -159,7 +159,7 @@ class FastCorrectCriterion(FairseqCriterion):
 
     @staticmethod
     def reduce_metrics(logging_outputs) -> None:
-        """Aggregate logging outputs from data parallel training."""
+        """Aggregate loggers outputs from data parallel training."""
         sample_size = utils.item(
             sum(log.get("sample_size", 0) for log in logging_outputs)
         )
@@ -189,7 +189,7 @@ class FastCorrectCriterion(FairseqCriterion):
     @staticmethod
     def logging_outputs_can_be_summed() -> bool:
         """
-        Whether the logging outputs returned by `forward` can be summed
+        Whether the loggers outputs returned by `forward` can be summed
         across workers prior to calling `reduce_metrics`. Setting this
         to True will improves distributed training speed.
         """

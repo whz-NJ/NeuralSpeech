@@ -5,11 +5,14 @@
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
+import sys
+sys.path.append("..")
+from loggers import bs_logger as logger
 
 import torch
 import torch.nn.functional as F
 from fairseq import utils
-from fastcorrect_generator import DecoderOut
+from FC_utils.fastcorrect_generator import DecoderOut
 from fairseq.models import register_model, register_model_architecture
 from fairseq.models.nat import FairseqNATDecoder, FairseqNATModel, ensemble_decoder, ensemble_encoder
 from fairseq.models.transformer import Embedding
@@ -19,9 +22,6 @@ from torch import Tensor
 from fairseq.models.transformer import (
     TransformerEncoder,
 )
-
-import logging
-logger = logging.getLogger(__name__)
 
 def Embeddingright(num_embeddings, embedding_dim, padding_idx):
     m = nn.Embedding(num_embeddings, embedding_dim, padding_idx=padding_idx)

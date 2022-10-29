@@ -11,10 +11,9 @@ from collections import namedtuple
 import numpy as np
 import torch
 from fairseq import utils
-import time
-
-import logging
-logger = logging.getLogger(__name__)
+import sys
+sys.path.append("..")
+from loggers import bs_logger as logger
 
 DecoderOut = namedtuple(
     "FastCorrectDecoderOut",

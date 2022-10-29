@@ -28,14 +28,14 @@ from app.config import *
 
 class StreamHandler_MP(StreamHandler):
     """
-    A handler class which writes logging records, appropriately formatted,
+    A handler class which writes loggers records, appropriately formatted,
     to a stream. Use for multiprocess.
     """
 
     def emit(self, record):
         """
         Emit a record.
-            First seek the end of file for multiprocess to logging to the same file
+            First seek the end of file for multiprocess to loggers to the same file
         """
         try:
             if hasattr(self.stream, "seek"):
@@ -48,7 +48,7 @@ class StreamHandler_MP(StreamHandler):
 
 class FileHandler_MP(FileHandler, StreamHandler_MP):
     """
-    A handler class which writes formatted logging records to disk files
+    A handler class which writes formatted loggers records to disk files
         for multiprocess
     """
 
@@ -66,10 +66,10 @@ class FileHandler_MP(FileHandler, StreamHandler_MP):
 
 class RotatingFileHandler_MP(RotatingFileHandler, FileHandler_MP):
     """
-    Handler for logging to a set of files, which switches from one file
+    Handler for loggers to a set of files, which switches from one file
     to the next when the current file reaches a certain size.
 
-    Based on logging.RotatingFileHandler, modified for Multiprocess
+    Based on loggers.RotatingFileHandler, modified for Multiprocess
     """
     _lock_dir = '.lock'
     if os.path.exists(_lock_dir):
@@ -126,7 +126,7 @@ class RotatingFileHandler_MP(RotatingFileHandler, FileHandler_MP):
 
 class TimedRotatingFileHandler_MP(TimedRotatingFileHandler, FileHandler_MP):
     """
-    Handler for logging to a file, rotating the logging file at certain timed
+    Handler for loggers to a file, rotating the loggers file at certain timed
     intervals.
 
     If backupCount is > 0, when rollover is done, no more than backupCount
@@ -242,7 +242,7 @@ class TimedRotatingFileHandler_MP(TimedRotatingFileHandler, FileHandler_MP):
             # print "%s -> %s" % (self.baseFilename, dfn)
             # os.rename(self.baseFilename, dfn)
         if self.backupCount > 0:
-            # find the oldest logging file and delete it
+            # find the oldest loggers file and delete it
             # s = glob.glob(self.baseFilename + ".20*")
             # if len(s) > self.backupCount:
             #    s.sort()
@@ -315,7 +315,7 @@ def init_log():
     error_log_handler.setFormatter(logging_format)
 
     bs_logger.addHandler(bs_log_handler)
-    bs_logger.addHandler(console_handler)
+    #bs_logger.addHandler(console_handler)
     bs_logger.setLevel(DATA_BS_LOG_LEVEL)
 
     error_logger.addHandler(error_log_handler)

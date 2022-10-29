@@ -6,7 +6,9 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import logging
+import sys
+sys.path.append("..")
+from loggers import bs_logger as logger
 
 import numpy as np
 import torch
@@ -14,7 +16,7 @@ from fairseq.data import FairseqDataset, data_utils
 import random                                           
 import math
 
-logger = logging.getLogger(__name__)
+#logger = loggers.getLogger(__name__)
 
 def collate_2d_tokens(
     values,

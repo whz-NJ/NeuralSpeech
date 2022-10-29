@@ -6,7 +6,7 @@
 import argparse
 import codecs
 import json
-import logging
+import loggers
 import re
 import six
 import sys
@@ -135,7 +135,7 @@ def merge_results(results):
         j = results[x]
 
         ks = j["utts"].keys()
-        logging.info(x + ": has " + str(len(ks)) + " utterances")
+        loggers.info(x + ": has " + str(len(ks)) + " utterances")
 
         if len(intersec_keys) > 0:
             intersec_keys = intersec_keys.intersection(set(ks))
@@ -143,7 +143,7 @@ def merge_results(results):
             intersec_keys = set(ks)
         rslt_lst.append(j)
 
-    logging.info(
+    loggers.info(
         "After merge, the result has " + str(len(intersec_keys)) + " utterances"
     )
 

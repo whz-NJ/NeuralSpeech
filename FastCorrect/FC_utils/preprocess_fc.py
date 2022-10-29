@@ -9,7 +9,7 @@
 # Data pre-processing: build vocabularies and binarize training data.
 # """
 
-import logging
+import loggers
 import os
 import shutil
 import sys
@@ -23,13 +23,13 @@ from binarizer_fc import Binarizer
 from fairseq.data import indexed_dataset
 
 
-logging.basicConfig(
+loggers.basicConfig(
     format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
     level=os.environ.get("LOGLEVEL", "INFO").upper(),
     stream=sys.stdout,
 )
-logger = logging.getLogger("fairseq_cli.preprocess")
+logger = loggers.getLogger("fairseq_cli.preprocess")
 
 
 def main(args):
@@ -38,7 +38,7 @@ def main(args):
     os.makedirs(args.destdir, exist_ok=True)
 
     logger.addHandler(
-        logging.FileHandler(
+        loggers.FileHandler(
             filename=os.path.join(args.destdir, "preprocess.log"),
         )
     )

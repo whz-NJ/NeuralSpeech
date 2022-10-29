@@ -8,9 +8,11 @@
 
 import os
 import itertools
-import logging
+import sys
+sys.path.append("..")
+from loggers import bs_logger as logger
 
-logger = logging.getLogger(__name__)
+# logger = loggers.getLogger(__name__)
 
 import torch
 from fairseq import utils
