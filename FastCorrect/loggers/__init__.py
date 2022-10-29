@@ -287,7 +287,11 @@ def init_log():
     日志初始化
     :return:
     """
-    logger = logging.getLogger()
+    logging.basicConfig(format='%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s',
+                        filename=f'/tmp/fc.out',
+                        level=logging.INFO,
+                        filemode='a+')
+
     data_logger = logging.getLogger(data_logger_name)
     bs_logger = logging.getLogger(business_logger_name)
     error_logger = logging.getLogger(error_logger_name)
