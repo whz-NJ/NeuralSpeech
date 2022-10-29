@@ -97,6 +97,8 @@ def asr_replace_func(input_file_path, output_file_dir, ref_hypos_map):
         for ref,hypos in ref_hypos_map.items():
             for hypo in hypos:
                 sentences.append(ref + "\t" + hypo + "\n")
+            if ref not in hypos:
+                sentences.append(ref + "\t" + ref + "\n") #参考语料必须对应一条训练语料
         #文件扫描结束
         if len(sentences) > 0:
             outfile.writelines(sentences)
@@ -121,9 +123,7 @@ def merge_preprocess_aiui_football_asr(root_dir, input_base_dir, output_base_dir
     file_name_ref_hypos_map = {}
     for root,dirs,files in os.walk(output_base_dir):
         for file in files:
-            if not file.endswith(".txt"):
-                continue
-            if not file.startswith("std_"): #跳过未标准化的文件
+            if not file.endswith(".txt") or not file.startswith("std_"): #跳过未标准化的文件
                 continue
             ref_hypos_map = {}
             std_asr_file_path = os.path.join(root, file)

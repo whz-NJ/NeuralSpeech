@@ -99,8 +99,9 @@
 九天执行 data-gen.sh 将对齐结果二进制化
 九天执行 train_pretrain.sh 训练模型
 九天执行 train_ft.sh 对模型微调
-九天执行 gen_asr_eval_data.py 生成测试集/验证集的 data.json，放在 /root/std_noised_sports_corpus4 的test或dev或hdc2子目录
-九天执行 test_ft.sh 根据 /root/std_noised_sports_corpus4 目录test或dev或hdc2子目录下数据的模型在不同epoch的预测效果（即生成 data.json）
+九天执行 gen_asr_eval_data.py 生成测试集/验证集的 data.json，放在 /root/std_noised_sports_corpus4 的test或dev
+本地执行 create_asr_data_json.py 根据验证原始文本和标注文本，生成 data.json，并上传九天 /root/std_noised_sports_corpus4 目录 hdc2 子目录
+九天执行 test_ft.sh 根据 /root/std_noised_sports_corpus4 目录test或dev子目录下数据的模型在不同epoch的预测效果（即生成 data.json，在/root/fastcorrect/models/finetune.ftb4/results_*目录下）
 九天执行 cal_wer_asr.sh 展示模型在不同epoch的验证集/测试集上的纠错效果
 部署到阿里云，本地执行 call_fc_gen_json.py 脚本，验证未学习语料效果，得到各个asr原始和fc纠错语料的json文件
 上传asr原始和fc纠错语料的json文件到九天，九天执行cal_wer.sh脚本统计最终模型效果

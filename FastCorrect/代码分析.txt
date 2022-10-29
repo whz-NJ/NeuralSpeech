@@ -1,0 +1,28 @@
+run_fc.py:65:
+    batched_hypos = transf_gec.generate(bin_text, iter_decode_max_iter=iter_decode_max_iter)
+
+hub_utils_fc.py:180:
+    if torch.is_tensor(tokenized_sentences) and tokenized_sentences.dim() == 1:
+        return self.generate(
+            tokenized_sentences.unsqueeze(0), beam=beam, verbose=verbose, **kwargs
+        )[0]
+
+fastcorrect_task.py:372:
+    with torch.no_grad():
+        return generator.generate(
+           models, sample, prefix_tokens=prefix_tokens, constraints=constraints, werdur_gt_str=werdur_gt_str)
+
+torch/autograd/grad_mode.py:15:
+    return func(*args, **kwargs)
+
+fastcorrect_generator.py:146:
+    if getattr(model.decoder, "wer_dur_weight", None) or getattr(model.decoder, "dur_predictor", None):
+        prev_decoder_out, encoder_out = model.initialize_output_tokens(encoder_out, src_tokens, self.edit_thre, self.print_werdur, werdur_gt_str=werdur_gt_str)
+
+fastcorrect_model.py:363: DecoderOut.wer_dur_pred
+    if 'log' in self.werdur_loss_type:
+        wer_dur_pred = (torch.exp(wer_dur_pred) - 1.0).squeeze(-1).round().long().clamp_(min=0)
+        length_tgt = wer_dur_pred.sum(-1)
+    else:
+        wer_dur_pred = wer_dur_pred.squeeze(-1).round().long().clamp_(min=0)
+        length_tgt = wer_dur_pred.sum(-1)

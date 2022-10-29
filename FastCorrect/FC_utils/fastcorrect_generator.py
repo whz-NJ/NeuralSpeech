@@ -13,6 +13,9 @@ import torch
 from fairseq import utils
 import time
 
+import logging
+logger = logging.getLogger(__name__)
+
 DecoderOut = namedtuple(
     "FastCorrectDecoderOut",
     ["output_tokens", "output_scores", "attn", "step", "max_step", "history", "to_be_edited_pred", "wer_dur_pred"],
@@ -300,7 +303,7 @@ class FastCorrectGenerator(object):
             )
             sent_idxs = sent_idxs[not_terminated]
             prev_output_tokens = prev_decoder_out.output_tokens.clone()
-
+        logger.info(f"decoder_out = {decoder_out}")
         if self.beam_size > 1:
             if reranker is not None:
                 finalized = self.rerank(
