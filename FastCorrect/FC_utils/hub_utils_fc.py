@@ -21,6 +21,7 @@ from fairseq import utils
 from fairseq.data import encoders
 from torch import nn
 import time
+from loggers import bs_logger as logger
 
 def from_pretrained(
     model_name_or_path,
@@ -156,9 +157,10 @@ class GeneratorHubInterface(nn.Module):
         **kwargs
     ) -> List[List[Dict[str, torch.Tensor]]]:
         if torch.is_tensor(tokenized_sentences) and tokenized_sentences.dim() == 1:
-            return self.generate(
+            result = self.generate(
                 tokenized_sentences.unsqueeze(0), beam=beam, verbose=verbose, **kwargs
-            )[0]
+            )
+            return result[0], result[1].tolist()[1:-1]
 
         # build generator using current args as well as any kwargs
         gen_args = copy.copy(self.args)
@@ -169,14 +171,16 @@ class GeneratorHubInterface(nn.Module):
 
         inference_step_args = inference_step_args or {}
         results = []
+        wer_durs_pred = []
         begin_time_exc = 0.0
+
         for batch in self._build_batches(tokenized_sentences, skip_invalid_size_inputs):
             batch = utils.apply_to_sample(lambda t: t.to(self.device), batch)
             assert begin_time_exc == 0.0
             begin_time_exc = time.time()
             # print("Input shape:", batch["net_input"]["src_tokens"].shape)
             # print("Begin:", time.time())
-            translations = self.task.inference_step(
+            translations, wer_dur_pred = self.task.inference_step(
                 generator, self.models, batch, **inference_step_args
             )
             # print("End:", time.time())
@@ -221,7 +225,8 @@ class GeneratorHubInterface(nn.Module):
                                 )
                             )
                         )
-        return outputs, exc_time
+        #logger.info(f'outputs={outputs}, wer_dur_pred={wer_dur_pred}')
+        return outputs, wer_dur_pred, exc_time
 
     def encode(self, sentence: str) -> torch.LongTensor:
         sentence = self.tokenize(sentence)

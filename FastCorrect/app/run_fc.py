@@ -55,18 +55,23 @@ def fast_correct():
         sentences = preprocess.normAndTokenize(text, min_sentence_len=1, split_sentences=True)
         corrections = []
         for sentence in sentences:
-            if len(sentence) >= 2:
-                logger.info("sentence to be corrected: " + sentence)
+            joined_sentence = "".join(sentence.split())
+            tokens = sentence.split()
+            if len(tokens) >= 2:
+                logger.info("sentence to be corrected: " + joined_sentence)
                 bin_text = transf_gec.binarize(sentence)
-                batched_hypos = transf_gec.generate(bin_text, iter_decode_max_iter=iter_decode_max_iter)
+                batched_hypos, wer_dur_pred = transf_gec.generate(bin_text, iter_decode_max_iter=iter_decode_max_iter)
                 translated = [transf_gec.decode(hypos[0]['tokens']) for hypos in batched_hypos][0]
                 if isinstance(translated, tuple):
                     translated = translated[0]
                 logger.info(f"corrected sentence: {translated}")
             else:
-                translated = sentence
+                translated = sentence.strip()
+                wer_dur_pred=[1]
             correction = {}
+            correction["text"] = joined_sentence
             correction["fc_text"] = translated
+            correction["wer_dur_pred"] = wer_dur_pred
             corrections.append(correction)
 
         end = time.time()

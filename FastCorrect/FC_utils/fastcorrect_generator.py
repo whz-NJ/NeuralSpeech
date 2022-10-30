@@ -302,7 +302,7 @@ class FastCorrectGenerator(object):
             )
             sent_idxs = sent_idxs[not_terminated]
             prev_output_tokens = prev_decoder_out.output_tokens.clone()
-        logger.info(f"decoder_out = {decoder_out}")
+        # logger.info(f"wer_dur_pred = {decoder_out.wer_dur_pred[0]}")
         if self.beam_size > 1:
             if reranker is not None:
                 finalized = self.rerank(
@@ -323,7 +323,7 @@ class FastCorrectGenerator(object):
                 for i in range(len(finalized) // self.beam_size)
             ]
 
-        return finalized
+        return finalized, decoder_out.wer_dur_pred[0]
 
     def rerank(self, reranker, finalized, encoder_input, beam_size):
         def rebuild_batch(finalized):

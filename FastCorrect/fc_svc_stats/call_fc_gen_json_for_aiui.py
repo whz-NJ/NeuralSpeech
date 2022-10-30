@@ -44,8 +44,9 @@ for ref_asr_file_name in ref_asr_file_names:
         if len(asr_sentences) != len(ref_sentences):
             continue
         for asr_sentence,ref_sentence in zip(asr_sentences, ref_sentences):
-            fc_result = fc_correct("".join(asr_sentence.split()))
-            output0 = {'rec_text': fc_result, 'rec_token': " ".join(fc_result),
+            fc_result_text = fc_correct("".join(asr_sentence.split()))
+            fc_result_tokens = preprocess.normAndTokenize(fc_result_text)[0]
+            output0 = {'rec_text': fc_result_text, 'rec_token': fc_result_tokens,
                        'text': "".join("".join(ref_sentence.split())),
                        'token': " ".join(ref_sentence.split())}
             id = str(bson.ObjectId())

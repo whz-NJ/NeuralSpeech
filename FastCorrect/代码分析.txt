@@ -1,7 +1,7 @@
 run_fc.py:65:
     batched_hypos = transf_gec.generate(bin_text, iter_decode_max_iter=iter_decode_max_iter)
 
-hub_utils_fc.py:180:
+hub_utils_fc.py: 161=>180:
     if torch.is_tensor(tokenized_sentences) and tokenized_sentences.dim() == 1:
         return self.generate(
             tokenized_sentences.unsqueeze(0), beam=beam, verbose=verbose, **kwargs
