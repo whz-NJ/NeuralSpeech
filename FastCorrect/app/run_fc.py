@@ -19,13 +19,13 @@ from FastCorrect.fastcorrect_model import FastCorrectModel
 epoch = 'best'
 if EPOCH:
     epoch = EPOCH
-logger.info("FastCorrect server starting ...")
+logger.info(f'FastCorrect server with epoch {epoch} starting ...')
 
 if 1 == GPU_INDEX_ON_OFF:
     os.environ["CUDA_VISIBLE_DEVICES"] = str(GPU_DEVICE)
 
 # model_name_or_path = "/root/fc/fastcorrect/models/finetune.ftb"
-model_name_or_path = "/root/fc/fastcorrect/models/finetune.ftb4"
+model_name_or_path = "/root/fc/models/finetune.ftb4"
 iter_decode_max_iter = 0
 edit_thre = 0
 checkpoint_file = f"checkpoint{epoch}.pt"

@@ -10,15 +10,18 @@ RUN yum install -y python3 --nogpgcheck
 RUN pip3 install --upgrade pip -i https://mirrors.aliyun.com/pypi/simple/
 COPY requirements.txt /root/fc/
 COPY numpy-1.19.5-cp36-cp36m-manylinux2010_x86_64.whl /root/fc/
-RUN cd /root/fc/ && pip3 install ./numpy-1.19.5-cp36-cp36m-manylinux2010_x86_64.whl
+RUN cd /root/fc/ &&
+pip3 install ./numpy-1.19.5-cp36-cp36m-manylinux2010_x86_64.whl
 COPY torch-1.6.0-cp36-cp36m-linux_x86_64.whl /root/fc/
 RUN cd /root/fc/ && pip3 install ./torch-1.6.0-cp36-cp36m-linux_x86_64.whl
 RUN pip3 install -r /root/fc/requirements.txt -i https://mirrors.aliyun.com/pypi/simple/
 RUN cd /root/fc/ && rm -rf ./numpy-1.19.5-cp36-cp36m-manylinux2010_x86_64.whl ./torch-1.6.0-cp36-cp36m-linux_x86_64.whl ./requirements.txt
-COPY std_ftb_sports_corpus_en.bin /root/fc/std_ftb_sports_corpus_en.bin/
+COPY std_noised_sports_corpus4.bin /root/fc/std_noised_sports_corpus4.bin/
 COPY fastcorrect/ /root/fc/fastcorrect/
-WORKDIR /root/fc/fastcorrect
+COPY start.sh /root/fc/
+COPY stop.sh /root/fc/
+WORKDIR /root/fc
 #CMD python3 run_detect_server.py --instanceId=1
 #gunicorn -k gevent -c ./app/config/gun_basic.cfg run_fc:webapp
-CMD ["/usr/local/bin/gunicorn", "-k", "gevent", "-c", "./app/config/gun_basic.cfg", "run_fc:webapp"]
+CMD ["/usr/local/bin/gunicorn", "-k", "gevent", "-c", "./config/gun_basic.cfg", "run_fc:webapp"]
 
