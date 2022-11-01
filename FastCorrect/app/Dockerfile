@@ -6,16 +6,25 @@ ENV LANG en_US.UTF-8
 ENV TZ=Asia/Shanghai
 ENV PYTHONIOENCODING=utf-8
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
-RUN yum install -y python3 --nogpgcheck
-RUN pip3 install --upgrade pip -i https://mirrors.aliyun.com/pypi/simple/
+RUN rm /etc/yum.repos.d/*.repo
+COPY yum.repos/ /root/fc/yum.repos/
+RUN cd /root/fc/yum.repos/ && cp *.repo /etc/yum.repos.d/
+#COPY BCLinux-BaseOS.repo /etc/yum.repos.d/
+#COPY BCLinux-Kernel.repo /etc/yum.repos.d/
+#COPY BCLinux-PowerTools.repo /etc/yum.repos.d/
+#COPY epel.repo /etc/yum.repos.d/
+#RUN yum clean all
+#RUN yum install -y python36 --nogpgcheck
+COPY whls/ /root/fc/whls/
+RUN cd /root/fc/whls/python3.6.8/ && rpm -Uvh ./*.rpm --nodeps --force
+#RUN pip3 install --upgrade pip -i https://mirrors.aliyun.com/pypi/simple/
+RUN pip3 install --upgrade pip -i https://pypi.tuna.tsinghua.edu.cn/simple
 COPY requirements.txt /root/fc/
-COPY numpy-1.19.5-cp36-cp36m-manylinux2010_x86_64.whl /root/fc/
-RUN cd /root/fc/ &&
-pip3 install ./numpy-1.19.5-cp36-cp36m-manylinux2010_x86_64.whl
-COPY torch-1.6.0-cp36-cp36m-linux_x86_64.whl /root/fc/
-RUN cd /root/fc/ && pip3 install ./torch-1.6.0-cp36-cp36m-linux_x86_64.whl
-RUN pip3 install -r /root/fc/requirements.txt -i https://mirrors.aliyun.com/pypi/simple/
-RUN cd /root/fc/ && rm -rf ./numpy-1.19.5-cp36-cp36m-manylinux2010_x86_64.whl ./torch-1.6.0-cp36-cp36m-linux_x86_64.whl ./requirements.txt
+RUN cd /root/fc/whls/ && pip3 install ./numpy-1.19.5-cp36-cp36m-manylinux2010_x86_64.whl
+RUN cd /root/fc/whls/ && pip3 install ./torch-1.6.0-cp36-cp36m-linux_x86_64.whl
+#RUN pip3 install -r /root/fc/requirements.txt -i https://mirrors.aliyun.com/pypi/simple/
+RUN pip3 install -r /root/fc/requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+RUN cd /root/fc/ && rm -rf ./yum.repos ./whls ./requirements.txt
 COPY std_noised_sports_corpus4.bin /root/fc/std_noised_sports_corpus4.bin/
 COPY fastcorrect/ /root/fc/fastcorrect/
 COPY start.sh /root/fc/

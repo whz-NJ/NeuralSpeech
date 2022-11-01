@@ -2,7 +2,8 @@ import cn2an
 import os
 import json
 
-corpus_root_dir=r'C:\工作任务\AIUI\NLP模型测试\侯德成语料2\\'
+#corpus_root_dir=r'C:\工作任务\AIUI\NLP模型测试\侯德成语料2\\'
+corpus_root_dir=r'C:\工作任务\AIUI\NLP模型测试\侯德成语料3\\'
 cn_digit_map = {}
 cn_digit_map['零'] = '0'
 cn_digit_map['一'] = '1'
@@ -59,7 +60,7 @@ def norm_tokenize(line):
     idx = 0
     while idx < len(line):
         ch = Q2B(line[idx])
-        if cn_digit_map.__contains__(ch):
+        if cn_digit_map.__contains__(ch) or '0' <= ch <='9':
             cn_digits += ch
             if len(english) >0:
                 tokens.append(english)
@@ -80,10 +81,9 @@ def norm_tokenize(line):
                 cn_digits = ''
         elif '~' == ch:
             tokens.append('到')
-        elif '的' == ch:
-            tokens.append('得')
+        elif '得' == ch:
+            tokens.append('的')
         else:
-            tokens.append(ch)
             if len(english) > 0:
                 tokens.append(english)
                 english = ''
@@ -91,6 +91,7 @@ def norm_tokenize(line):
                 an_digits = my_cn2an(cn_digits)
                 tokens.extend(an_digits.split())
                 cn_digits = ''
+            tokens.append(ch)
         idx += 1
     if len(english) > 0:
         tokens.append(english)
@@ -99,8 +100,10 @@ def norm_tokenize(line):
         tokens.extend(an_digits.split())
     return tokens
 
-# string = norm_tokenize("大家可以留意他们得66号")
-# print(string)
+string = norm_tokenize("是零四零五赛季")
+print(string)
+string = norm_tokenize("将会有3万多名球迷来到现场")
+print(string)
 
 corpus_root_dir = corpus_root_dir.strip(r'/')
 corpus_root_dir = corpus_root_dir.strip(r'\\')

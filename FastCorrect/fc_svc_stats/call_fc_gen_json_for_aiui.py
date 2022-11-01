@@ -12,7 +12,8 @@ from scripts import preprocess
 correctUrl = "http://39.105.31.210:5051/fast_correct"
 corpus_root_dir=r'C:\工作任务\AIUI\NLP模型测试\侯德成语料3'
 
-ref_asr_file_names = ["10_28那不勒斯vs流浪者_asr.txt"]
+# ref_asr_file_names = ["10_28那不勒斯vs流浪者_asr.txt"]
+ref_asr_file_names = ["10_27那不勒斯vs流浪者_原始_asr.txt"]
 
 def fc_correct(text):
     headers = {'Content-Type': 'application/json'}
