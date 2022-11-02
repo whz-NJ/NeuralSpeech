@@ -57,27 +57,24 @@ def fast_correct():
         for sentence in sentences:
             tokens = sentence.split()
             if len(tokens) >= 2:
-                logger.info(f"tokens to be corrected: {tokens}")
                 bin_text = transf_gec.binarize(sentence)
                 batched_hypos, wer_dur_pred = transf_gec.generate(bin_text, iter_decode_max_iter=iter_decode_max_iter)
-                translated = [transf_gec.decode(hypos[0]['tokens']) for hypos in batched_hypos][0]
-                if isinstance(translated, tuple):
-                    translated = translated[0]
-                pred_tokens = " ".join(translated)
+                pred_tokens = []
+                for hypos in batched_hypos:
+                    #decoded_tokens = transf_gec.decode(hypos[0]['tokens'])
+                    pred_tokens = transf_gec.string(hypos[0]['tokens']).split()
+                    break
+                logger.info(f"tokens and werdur: {', '.join(token + ':' + str(werdur) for (token, werdur) in zip(tokens, wer_dur_pred))}")
                 logger.info(f"tokens predicted: {pred_tokens}")
             else:
-                translated = sentence.strip()
-                pred_tokens = [translated]
-                wer_dur_pred=[1]
-            correction = {}
-            correction["tokens"] = tokens
-            correction["fc_tokens"] = pred_tokens
-            correction["wer_dur_pred"] = wer_dur_pred
+                pred_tokens = [sentence.strip()]
+                wer_dur_pred = [1]
+            correction = {"tokens": tokens, "fc_tokens": pred_tokens, "wer_dur_pred": wer_dur_pred}
             corrections.append(correction)
 
         end = time.time()
         cost = str(round(end - start, ndigits=3))
-        logger.info(f"cost {cost} seconds")
+        logger.info(f"cost {cost} seconds\n")
 
         result = {}
         result['result_code'] = '200'
