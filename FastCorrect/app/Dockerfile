@@ -1,5 +1,5 @@
 FROM nvidia/cuda:10.2-cudnn7-devel-centos7
-LABEL maintainer="migu"
+LABEL maintainer="whz"
 #设置中文
 ENV LANG en_US.UTF-8
 #设置时区

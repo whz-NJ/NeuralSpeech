@@ -343,8 +343,6 @@ def noise_sentence(sentence):
 
 print(noise_sentence("马 丁 、 富 勒 讲 话 2 . 0 : 冲 啊 ."))
 print(noise_sentence("3 × 五 = 六"))
-# tokens = noise_sentence(preprocess.normAndTokenize("欢迎来到咪咕体育", 3, True)[0])
-# print(noise_sentence(preprocess.normAndTokenize("欢迎参加miguday", 3, True)[0]))
 
 import time
 begin_time = time.time()

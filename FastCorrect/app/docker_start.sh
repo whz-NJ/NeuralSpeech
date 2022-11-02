@@ -1,12 +1,12 @@
 #!/bin/bash
 # 容器名称
-DOCKER_NAME=migu_fc_gpu_28900
+DOCKER_NAME=fc_gpu_28900
 # 日志目录
-LOG_PATH=migu_fc_28900
+LOG_PATH=fc_28900
 # 项目名称目录
 PROJECT_NAME=FC_MidPlatform_GPU
 # 代码目录
-# CODE_PATH=Migu_HQ_TTS
+# CODE_PATH=HQ_TTS
 # 服务对外服务端口 按情况更改
 LOCAL_PORT=28900
 # 容器内部服务端口

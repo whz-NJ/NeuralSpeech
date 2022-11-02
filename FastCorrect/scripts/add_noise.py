@@ -250,8 +250,6 @@ def noise_sentence(sentence):
             new_tokens.append(tok)
     return new_tokens
 
-# tokens = noise_sentence(preprocess.normAndTokenize("欢迎来到咪咕体育", 3, True)[0])
-# print(noise_sentence(preprocess.normAndTokenize("欢迎参加miguday", 3, True)[0]))
 
 import time
 begin_time = time.time()
