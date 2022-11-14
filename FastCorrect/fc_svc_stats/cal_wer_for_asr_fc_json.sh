@@ -1,5 +1,5 @@
 #!/bin/bash
-result_data_file_dir='/root/fastcorrect/hdc_corpus'
+result_data_file_dir='/root/fastcorrect/hdc_corpus3'
 
 sckt_path='/root/fastcorrect/sctk-2.4.10/bin'
 

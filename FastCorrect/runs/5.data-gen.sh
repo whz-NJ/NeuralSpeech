@@ -28,6 +28,7 @@ dict_path=/root/fastcorrect/dictionary/short.dict.CN_char.txt
 
 #We use shared dictionary extracted from training corpus
 
+mkdir -p $DATA_PATH
 python $EXP_HOME/FC_utils/preprocess_fc.py --source-lang zh_CN --target-lang zh_CN_tgt \
     --task translation \
     --trainpref $TEXT/train --validpref $TEXT/valid \

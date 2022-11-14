@@ -1,3 +1,4 @@
+import os.path
 import sys
 import json
 import bson
@@ -52,6 +53,9 @@ result_object = {}
 result_object['utts'] = tts_objects
 result_string = json.dumps(result_object, ensure_ascii=False, indent = 2)
 
+eval_file_dir = os.path.dirname(eval_file_path)
+if not os.path.isdir(eval_file_dir):
+    os.makedirs(eval_file_dir)
 with open(eval_file_path, 'w', encoding='utf-8') as f:
     f.write(result_string)
 

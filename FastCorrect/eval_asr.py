@@ -76,9 +76,9 @@ for input_tsv in [os.path.join(commonset_dir, f, "data.json") for f in short_set
     translated_output_dict = {}
     processed_items = 0
     for k, v in translate_input_dict.items():
-        text = v[0] #ASR识别结果（value中的第一个元素）
+        text = v[0] #ASR识别结果（value中的第一个元素：json中的rec_token字段）
         #print(text)
-        gt = v[1] #原始语料value中的第二个元素）
+        gt = v[1] #原始语料value中的第二个元素：json中的token字段）
         start_time = time.time()
         time_ok = False
         try:
@@ -104,7 +104,7 @@ for input_tsv in [os.path.join(commonset_dir, f, "data.json") for f in short_set
         end_time = time.time()
         if not time_ok:
             all_time.append(end_time - start_time)
-
+        # 这里的分词不准确，应该用 preprocess 分词
         eval_origin_dict["utts"][k]["output"][0]["rec_text"] = " ".join("".join(translated.split()).replace('▁', ' ').strip().split())
         translated_char = [i for i in eval_origin_dict["utts"][k]["output"][0]["rec_text"]]
         # 将ASR转写出的结果，经过FC模型处理后，替换到 data.json 中的 rec_token/rec_text 中

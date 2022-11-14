@@ -5,9 +5,10 @@ import codecs
 import json
 import requests
 import bson
+from requests import Session
+from requests.adapters import HTTPAdapter
 sys.path.append("..")
 from scripts import preprocess
-#import preprocess
 
 correctUrl = "http://39.105.31.210:5051/fast_correct"
 corpus_root_dir=r'C:\工作任务\AIUI\NLP模型测试\侯德成语料2'
@@ -24,6 +25,9 @@ asr_file_names = ["原始字幕_10_8云达不莱梅vs门兴格拉德巴赫.txt",
 ref_file_names = ["转写后标注字幕_【厂家】10_8云达不莱梅VS门兴格拉德巴赫.txt", "转写后标注字幕_【厂家】10_8国际米兰vs巴塞罗那.txt", "转写后标注字幕_【厂家】10_8拜仁慕尼黑vs勒沃库森.txt",
                   "转写后标注字幕_【厂家】10_8本菲卡vs巴黎圣日耳曼.txt", "转写后标注字幕_【厂家】10_8欧塞尔vs布雷斯特.txt", "转写后标注字幕_【厂家】10_8科隆vs多特蒙德.txt",
                   "转写后标注字幕_【厂家】10_9兰斯vs巴黎圣日耳曼.txt", "转写后标注字幕_【厂家】10_9切尔西vs狼队.txt", "转写后标注字幕_【厂家】10_9多特蒙德vs拜仁慕尼黑.txt", "转写后标注字幕_【厂家】10_9美因茨vsRB莱比锡.txt"]
+session = Session()
+session.mount('http://', HTTPAdapter(max_retries=3))
+session.keep_alive = True
 def fc_correct(text):
     headers = {'Content-Type': 'application/json'}
     body = {'text': text}

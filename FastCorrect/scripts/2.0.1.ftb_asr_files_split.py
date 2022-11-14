@@ -5,8 +5,8 @@ import random
 sports_split_rate = [0.95, 0.00, 0.05] # 558篇 (28篇测试)
 aiui_split_rate = [0.80, 0.20, 0.00] # 128篇 (25篇验证)
 # processed_corpus_root_dir = "/root/std_ftb_sports_corpus_en"
-std_sports_corpus_root_dir = "/root/std_noised_sports_corpus4"
-std_aiui_football_corpus_root_dir = "/root/std_noised_aiui_football2" #从aiui系统导出的语料
+std_sports_corpus_root_dir = "/root/std_noised_sports_corpus3"
+std_aiui_football_corpus_root_dir = "/root/std_noised_aiui_football3" #从aiui系统导出的语料
 
 def replace_dot_path(path):
     pwd = os.getcwd()
@@ -36,6 +36,7 @@ if os.path.isfile(test_asr_output_file_path):
 train_file_paths = []
 valid_file_paths = []
 test_file_paths = []
+random.seed()
 def splitTrainValidTest(root_dir, split_rate):
     for root,dirs,files in os.walk(root_dir):
         if root == std_sports_corpus_root_dir:
@@ -49,6 +50,7 @@ def splitTrainValidTest(root_dir, split_rate):
         if len(valid_files) < 3:
             print(f"too few files {len(valid_files)} under folder: {root_dir}")
             continue
+        random.shuffle(valid_files)
         valid_files_num = int(split_rate[1]*float(len(valid_files)))
         test_files_num = int(split_rate[2]*float(len(valid_files)))
 

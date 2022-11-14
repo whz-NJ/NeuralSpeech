@@ -6,15 +6,15 @@ import win32com.client
 import preprocess
 
 sports_corpus_root_dir = "../sports_corpus"
-processed_sports_corpus_root_dir = "../sports_corpus5"
+processed_sports_corpus_root_dir = "../sports_corpus2"
 # corpus_root_dir = r"C:\Users\OS\Desktop\足球"
 # processed_corpus_root_dir = r"C:\Users\OS\Desktop\足球2"
 # aiui_football_dir = "../noised_aiui_football"
 # processed_aiui_football_dir = "../aiui_football2"
 # std_aiui_football_dir = "../std_noised_aiui_football2" #保存标准化后的正确语料-ASR语料对列表文件的目录
-aiui_football_dir = "../noised_aiui_football3" #包含 *_asr.txt 和 *.txt 两种文件
-processed_aiui_football_dir = "../aiui_football4" # 只有标准化的 *.txt文件
-std_aiui_football_dir = "../std_noised_aiui_football4" #保存标准化后的正确语料-ASR语料对列表文件的目录(std_*_asr.txt文件)
+aiui_football_dir = "../noised_aiui_football" #包含 *_asr.txt 和 *.txt 两种文件
+processed_aiui_football_dir = "../aiui_football2" # 只有标准化的 *.txt文件
+std_aiui_football_dir = "../std_noised_aiui_football2" #保存标准化后的正确语料-ASR语料对列表文件的目录(std_*_asr.txt文件)
 
 def replace_dot_path(path):
     result = ""

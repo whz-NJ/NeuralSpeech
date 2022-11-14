@@ -21,8 +21,7 @@ random.seed(random_seed)
 np.random.seed(random_seed)
 # input_file_dir = '/root/extracted/AA/'
 input_file_dir = '/root/std_wiki'
-# input_file_names = [r'std_zh_wiki_00', r'std_zh_wiki_01', r'std_zh_wiki_02'] #output of wiki_preprocess.py
-input_file_names = ['std_zh_wiki_00_sp000', 'std_zh_wiki_00_sp001', 'std_zh_wiki_00_sp002', 'std_zh_wiki_00_sp003', 'std_zh_wiki_00_sp004', 'std_zh_wiki_00_sp005', 'std_zh_wiki_00_sp006', 'std_zh_wiki_00_sp007', 'std_zh_wiki_00_sp008', 'std_zh_wiki_00_sp009', 'std_zh_wiki_00_sp010', 'std_zh_wiki_00_sp011', 'std_zh_wiki_00_sp012', 'std_zh_wiki_00_sp013', 'std_zh_wiki_00_sp014', 'std_zh_wiki_00_sp015', 'std_zh_wiki_00_sp016', 'std_zh_wiki_00_sp017', 'std_zh_wiki_00_sp018', 'std_zh_wiki_00_sp019', 'std_zh_wiki_00_sp020', 'std_zh_wiki_00_sp021', 'std_zh_wiki_00_sp022', 'std_zh_wiki_00_sp023', 'std_zh_wiki_00_sp024', 'std_zh_wiki_00_sp025', 'std_zh_wiki_00_sp026', 'std_zh_wiki_00_sp027', 'std_zh_wiki_00_sp028', 'std_zh_wiki_00_sp029', 'std_zh_wiki_00_sp030', 'std_zh_wiki_00_sp031', 'std_zh_wiki_00_sp032', 'std_zh_wiki_00_sp033', 'std_zh_wiki_00_sp034', 'std_zh_wiki_00_sp035', 'std_zh_wiki_00_sp036', 'std_zh_wiki_00_sp037', 'std_zh_wiki_00_sp038', 'std_zh_wiki_00_sp039', 'std_zh_wiki_00_sp040', 'std_zh_wiki_00_sp041', 'std_zh_wiki_00_sp042', 'std_zh_wiki_00_sp043', 'std_zh_wiki_00_sp044', 'std_zh_wiki_00_sp045', 'std_zh_wiki_00_sp046', 'std_zh_wiki_00_sp047', 'std_zh_wiki_00_sp048', 'std_zh_wiki_00_sp049', 'std_zh_wiki_00_sp050', 'std_zh_wiki_00_sp051', 'std_zh_wiki_00_sp052', 'std_zh_wiki_00_sp053', 'std_zh_wiki_00_sp054', 'std_zh_wiki_00_sp055', 'std_zh_wiki_00_sp056', 'std_zh_wiki_00_sp057', 'std_zh_wiki_00_sp058', 'std_zh_wiki_00_sp059', 'std_zh_wiki_00_sp060', 'std_zh_wiki_00_sp061', 'std_zh_wiki_00_sp062', 'std_zh_wiki_00_sp063', 'std_zh_wiki_00_sp064', 'std_zh_wiki_01_sp000', 'std_zh_wiki_01_sp001', 'std_zh_wiki_01_sp002', 'std_zh_wiki_01_sp003', 'std_zh_wiki_01_sp004', 'std_zh_wiki_01_sp005', 'std_zh_wiki_01_sp006', 'std_zh_wiki_01_sp007', 'std_zh_wiki_01_sp008', 'std_zh_wiki_01_sp009', 'std_zh_wiki_01_sp010', 'std_zh_wiki_01_sp011', 'std_zh_wiki_01_sp012', 'std_zh_wiki_01_sp013', 'std_zh_wiki_01_sp014', 'std_zh_wiki_01_sp015', 'std_zh_wiki_01_sp016', 'std_zh_wiki_01_sp017', 'std_zh_wiki_01_sp018', 'std_zh_wiki_01_sp019', 'std_zh_wiki_01_sp020', 'std_zh_wiki_01_sp021', 'std_zh_wiki_01_sp022', 'std_zh_wiki_01_sp023', 'std_zh_wiki_01_sp024', 'std_zh_wiki_01_sp025', 'std_zh_wiki_01_sp026', 'std_zh_wiki_01_sp027', 'std_zh_wiki_01_sp028', 'std_zh_wiki_01_sp029', 'std_zh_wiki_01_sp030', 'std_zh_wiki_01_sp031', 'std_zh_wiki_01_sp032', 'std_zh_wiki_01_sp033', 'std_zh_wiki_01_sp034', 'std_zh_wiki_01_sp035', 'std_zh_wiki_01_sp036', 'std_zh_wiki_01_sp037', 'std_zh_wiki_01_sp038', 'std_zh_wiki_01_sp039', 'std_zh_wiki_01_sp040', 'std_zh_wiki_01_sp041', 'std_zh_wiki_01_sp042', 'std_zh_wiki_01_sp043', 'std_zh_wiki_01_sp044', 'std_zh_wiki_01_sp045', 'std_zh_wiki_01_sp046', 'std_zh_wiki_01_sp047', 'std_zh_wiki_01_sp048', 'std_zh_wiki_01_sp049', 'std_zh_wiki_01_sp050', 'std_zh_wiki_01_sp051', 'std_zh_wiki_01_sp052', 'std_zh_wiki_01_sp053', 'std_zh_wiki_01_sp054', 'std_zh_wiki_01_sp055', 'std_zh_wiki_01_sp056', 'std_zh_wiki_01_sp057', 'std_zh_wiki_01_sp058', 'std_zh_wiki_01_sp059', 'std_zh_wiki_01_sp060', 'std_zh_wiki_01_sp061', 'std_zh_wiki_02_sp000', 'std_zh_wiki_02_sp001', 'std_zh_wiki_02_sp002', 'std_zh_wiki_02_sp003', 'std_zh_wiki_02_sp004', 'std_zh_wiki_02_sp005', 'std_zh_wiki_02_sp006', 'std_zh_wiki_02_sp007', 'std_zh_wiki_02_sp008', 'std_zh_wiki_02_sp009', 'std_zh_wiki_02_sp010', 'std_zh_wiki_02_sp011', 'std_zh_wiki_02_sp012', 'std_zh_wiki_02_sp013', 'std_zh_wiki_02_sp014', 'std_zh_wiki_02_sp015', 'std_zh_wiki_02_sp016', 'std_zh_wiki_02_sp017', 'std_zh_wiki_02_sp018', 'std_zh_wiki_02_sp019', 'std_zh_wiki_02_sp020', 'std_zh_wiki_02_sp021', 'std_zh_wiki_02_sp022', 'std_zh_wiki_02_sp023', 'std_zh_wiki_02_sp024', 'std_zh_wiki_02_sp025', 'std_zh_wiki_02_sp026', 'std_zh_wiki_02_sp027', 'std_zh_wiki_02_sp028', 'std_zh_wiki_02_sp029', 'std_zh_wiki_02_sp030']
+input_file_names = [r'std_zh_wiki_00', r'std_zh_wiki_01', r'std_zh_wiki_02'] #output of wiki_preprocess.py
 # input_file_dir = r'C:\Code\NeuralSpeech\FastCorrect'
 # input_file_names= [r'std_wiki_cn.txt']
 
@@ -163,6 +162,8 @@ all_op3 = [SUB, INS_L, INS_R] #有三个连续token都匹配，就不认为应�
 prob_op3 = [2/3, 1/6, 1/6]
 
 def add_tokens_noise(token, op, candidates):
+    if op != SUB and ('0' <= token <= '9'): #针对数字，只添加替换噪声，不添加DEL/INS噪声
+        op = SUB
     if op == SUB:
         if candidates is None:
             random_token = np.random.choice(vocab_1char)
@@ -252,7 +253,7 @@ def noise_sentence(sentence):
         return "", [], []
 
     new_tokens = []
-    filted_tokens = []
+    filtered_tokens = []
 
     i = 0
     prev_tok = ""
@@ -268,7 +269,7 @@ def noise_sentence(sentence):
                 if prev_tok == "" or ('\u4e00' <= prev_tok <= '\u9fa5' or prev_tok < '0' or prev_tok > '9') \
                         or i == (tokens_num -1) or (tokens[i+1] < '0' or tokens[i+1] > '9'):
                     i += 1
-                    filted_tokens.append(tok)
+                    filtered_tokens.append(tok)
                     prev_tok = tok
                     continue
                 if is_time:
@@ -278,7 +279,7 @@ def noise_sentence(sentence):
                 new_tokens.append(sim_token)
                 prev_tok = tok
                 i += 1
-                filted_tokens.append(tok)
+                filtered_tokens.append(tok)
                 continue
 
             if tok == ".":
@@ -286,19 +287,19 @@ def noise_sentence(sentence):
                 if prev_tok == "" or ('\u4e00' <= prev_tok <= '\u9fa5' or prev_tok < '0' or prev_tok > '9') \
                         or i == (tokens_num -1) or (tokens[i+1] < '0' or tokens[i+1] > '9'):
                     i += 1
-                    filted_tokens.append(tok)
+                    filtered_tokens.append(tok)
                     prev_tok = tok
                     continue
                 sim_token = np.random.choice(dot_sim_chars)
                 new_tokens.append(sim_token)
                 prev_tok = tok
                 i += 1
-                filted_tokens.append(tok)
+                filtered_tokens.append(tok)
                 continue
             if tok == "、" or tok == '·' or tok == "'":
                 #这些字符噪声只有删除
                 i += 1
-                filted_tokens.append(tok)
+                filtered_tokens.append(tok)
                 prev_tok = tok
                 continue
             if tok in preprocess.kept_char_map: #找特殊符号对应的相似读音的中文汉字
@@ -306,7 +307,7 @@ def noise_sentence(sentence):
                 matched_info = np.random.choice(candidates)
                 new_tokens.extend(matched_info.sim_words)
                 prev_tok = tok
-                filted_tokens.extend(tokens[i:i + matched_info.matched_tokens_num])
+                filtered_tokens.extend(tokens[i:i + matched_info.matched_tokens_num])
                 i += matched_info.matched_tokens_num
                 continue
             matched_info = trie_dict.get_pairs(tokens[i:])
@@ -326,7 +327,7 @@ def noise_sentence(sentence):
                 if prev_tok == '时' and tok == '间':
                     is_time = True
                 prev_tok = tok
-                filted_tokens.extend(tokens[i : i+matched_tokens_num])
+                filtered_tokens.extend(tokens[i : i+matched_tokens_num])
                 i += matched_tokens_num
                 continue
 
@@ -335,10 +336,10 @@ def noise_sentence(sentence):
             is_time = True
         prev_tok = tok
         i += 1
-        filted_tokens.append(tok)
+        filtered_tokens.append(tok)
     if len(new_tokens) > 0:
-        werdurs = align_encoder(new_tokens, filted_tokens)
-        return " ".join(filted_tokens), werdurs, new_tokens
+        werdurs = align_encoder(new_tokens, filtered_tokens)
+        return " ".join(filtered_tokens), werdurs, new_tokens
     return "", [], []
 
 print(noise_sentence("马 丁 、 富 勒 讲 话 2 . 0 : 冲 啊 ."))
@@ -381,6 +382,7 @@ for input_file_name in input_file_names:
     train_refs = []
     valid_refs = []
     test_refs = []
+    print(f"begin to process file:{input_file_name}")
     with open(input_file_path, 'r', encoding='utf-8') as infile:
         for line in infile.readlines():
             corpus_count = corpus_count + 1
@@ -391,7 +393,7 @@ for input_file_name in input_file_names:
             if not line:
                 continue
             filt_sentence, werdurs, new_tokens = noise_sentence(line)
-            if len(new_tokens) > 1: # 一句处理完成（一行有一句）
+            if werdurs and new_tokens and len(new_tokens) > 1 and len(werdurs) > 1: # 一句处理完成（一行有一句）
                 hypo_werdur = " ".join(new_tokens) + " |||| " + " ".join([str(w) for w in werdurs]) + '\n'
                 ref = filt_sentence + "\n"
                 set_op = np.random.choice(set_ops, p=split_rate)

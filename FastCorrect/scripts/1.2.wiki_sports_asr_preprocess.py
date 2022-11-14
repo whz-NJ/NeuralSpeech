@@ -10,12 +10,12 @@ wiki_data_path = '/root/extracted/AA'
 wiki_data_names = ['zh_wiki_00', 'zh_wiki_01', 'zh_wiki_02']
 std_wiki_data_root_dir = '/root/std_wiki'
 
-sports_asr_root_dir = r'C:\Code\NeuralSpeech\FastCorrect\noised_sports_corpus4'
-std_sports_asr_root_dir = r'C:\Code\NeuralSpeech\FastCorrect\std_noised_sports_corpus4'
+sports_asr_root_dir = r'C:\Code\NeuralSpeech\FastCorrect\normed_noised_sports_corpus2'
+std_sports_asr_root_dir = r'C:\Code\NeuralSpeech\FastCorrect\std_noised_sports_corpus3'
 
-aiui_football_asr_root_dir = r'C:\Code\NeuralSpeech\FastCorrect\noised_aiui_football4'
-# TODO 注意： 这个脚本必须一次执行完，不能执行到中途停止，重新执行，这样可能会把 std_*_asr.txt 文件清空
-std_aiui_football_asr_root_dir = r'C:\Code\NeuralSpeech\FastCorrect\std_noised_aiui_football4' #已经存在一版龙猫已经标注好的标注语料
+aiui_football_asr_root_dir = r'C:\Code\NeuralSpeech\FastCorrect\normed_noised_aiui_football2'
+std_aiui_football_asr_root_dir0 = r'C:\Code\NeuralSpeech\FastCorrect\normed_std_noised_aiui_football2' #已经存在一版龙猫已经标注好的标注语料
+std_aiui_football_asr_root_dir = r'C:\Code\NeuralSpeech\FastCorrect\std_noised_aiui_football3'
 
 def wiki_replace_func(input_file_path, output_file_dir):
     input_file_name = os.path.basename(input_file_path)
@@ -105,8 +105,8 @@ def asr_replace_func(input_file_path, output_file_dir, ref_hypos_map):
 
     outfile.close()
 
-def preprocess_sports_asr(root_dir, input_base_dir, output_base_dir):
-    for root,dirs,files in os.walk(root_dir):
+def preprocess_sports_asr(input_base_dir, output_base_dir):
+    for root,dirs,files in os.walk(input_base_dir):
         for file in files:
             if not file.endswith(".txt"):
                 continue
@@ -118,10 +118,10 @@ def preprocess_sports_asr(root_dir, input_base_dir, output_base_dir):
             asr_replace_func(file_path, output_file_dir, None) #运动语料出现的词语必须出现
             print(f"{file_path} has been processed.")
 
-def merge_preprocess_aiui_football_asr(root_dir, input_base_dir, output_base_dir):
+def merge_preprocess_aiui_football_asr(input_base_dir, input_std_base_dir, output_base_dir):
     # 存储之前龙猫标注好的语料
     file_name_ref_hypos_map = {}
-    for root,dirs,files in os.walk(output_base_dir):
+    for root,dirs,files in os.walk(input_std_base_dir):
         for file in files:
             if not file.endswith(".txt") or not file.startswith("std_"): #跳过未标准化的文件
                 continue
@@ -140,7 +140,7 @@ def merge_preprocess_aiui_football_asr(root_dir, input_base_dir, output_base_dir
                     ref_hypos_map[ref] = hypos
             file_name_ref_hypos_map[file[4:]] = ref_hypos_map
     # 将ASR输出语料和龙猫标注语料合并
-    for root,dirs,files in os.walk(root_dir):
+    for root,dirs,files in os.walk(input_base_dir):
         for file in files:
             if not file.endswith(".txt"):
                 continue
@@ -187,10 +187,10 @@ def run():
                     # 强制纠错中的token一定要出现在词表中
                     preprocess.tokens_count_dict[tmp_token] = MIN_RULE_TOKEN_COUNT + count + 1
 
-    #处理各运动项目ASR转写出的语料
-    preprocess_sports_asr(sports_asr_root_dir, sports_asr_root_dir, std_sports_asr_root_dir)
     #将 aiui_football转写语料和龙猫标注语料合并
-    merge_preprocess_aiui_football_asr(aiui_football_asr_root_dir, aiui_football_asr_root_dir, std_aiui_football_asr_root_dir)
+    merge_preprocess_aiui_football_asr(aiui_football_asr_root_dir, std_aiui_football_asr_root_dir0, std_aiui_football_asr_root_dir)
+    #处理各运动项目ASR转写出的语料
+    preprocess_sports_asr(sports_asr_root_dir, std_sports_asr_root_dir)
     #处理各wiki文件
     # for data_name in wiki_data_names:
     #     wiki_replace_func(os.path.join(wiki_data_path, data_name), std_wiki_data_root_dir)

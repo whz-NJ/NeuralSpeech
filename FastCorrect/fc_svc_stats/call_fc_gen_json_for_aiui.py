@@ -5,9 +5,10 @@ import codecs
 import json
 import requests
 import bson
+from requests import Session
+from requests.adapters import HTTPAdapter
 sys.path.append("..")
 from scripts import preprocess
-#import preprocess
 
 correctUrl = "http://39.105.31.210:5051/fast_correct"
 corpus_root_dir=r'C:\工作任务\AIUI\NLP模型测试\侯德成语料3'
@@ -15,6 +16,9 @@ corpus_root_dir=r'C:\工作任务\AIUI\NLP模型测试\侯德成语料3'
 # ref_asr_file_names = ["10_28那不勒斯vs流浪者_asr.txt"]
 ref_asr_file_names = ["10_27那不勒斯vs流浪者_原始_asr.txt"]
 
+session = Session()
+session.mount('http://', HTTPAdapter(max_retries=3))
+session.keep_alive = True
 def fc_correct(text):
     headers = {'Content-Type': 'application/json'}
     body = {'text': text}
@@ -24,7 +28,7 @@ def fc_correct(text):
     if resp_json['result_code'] and "200" == resp_json['result_code']:
         corrections = resp_json['corrections']
         if len(corrections) == 1:
-            return corrections[0]["fc_text"]
+            return corrections[0]["fc_tokens"]
     return ""
 
 
@@ -45,9 +49,8 @@ for ref_asr_file_name in ref_asr_file_names:
         if len(asr_sentences) != len(ref_sentences):
             continue
         for asr_sentence,ref_sentence in zip(asr_sentences, ref_sentences):
-            fc_result_text = fc_correct("".join(asr_sentence.split()))
-            fc_result_tokens = preprocess.normAndTokenize(fc_result_text)[0]
-            output0 = {'rec_text': fc_result_text, 'rec_token': fc_result_tokens,
+            fc_result_tokens = fc_correct("".join(asr_sentence.split()))
+            output0 = {'rec_text': "".join(fc_result_tokens), 'rec_token': " ".join(fc_result_tokens),
                        'text': "".join("".join(ref_sentence.split())),
                        'token': " ".join(ref_sentence.split())}
             id = str(bson.ObjectId())

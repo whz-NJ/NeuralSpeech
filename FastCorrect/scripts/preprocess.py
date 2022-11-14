@@ -578,7 +578,7 @@ def main():
     # print(normAndTokenize("现在比分是9:20"))
     # print(normAndTokenize("职业生涯CBA的第3场比赛"))
     # print(normAndTokenize("21.34"))
-    print(longNormAndTokenize("，呵呵，这个是不是。啊"))
+    print(longNormAndTokenize("纽 卡 的 1 1 ~ 1 2 赛 季"))
     print(longNormAndTokenize("，鲍恩。上个赛季是英超最为瞩目的中场球员之一	"))
     print(longNormAndTokenize("球员之一,好的"))
     print(normAndTokenize("现 在 C B A 赛 事 转 播"))

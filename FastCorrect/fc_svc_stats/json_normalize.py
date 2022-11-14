@@ -3,7 +3,7 @@ import os
 import json
 
 #corpus_root_dir=r'C:\工作任务\AIUI\NLP模型测试\侯德成语料2\\'
-corpus_root_dir=r'C:\工作任务\AIUI\NLP模型测试\侯德成语料3\\'
+corpus_root_dir=r'C:\test\\test2'
 cn_digit_map = {}
 cn_digit_map['零'] = '0'
 cn_digit_map['一'] = '1'
@@ -35,6 +35,9 @@ def Q2B(uchar):
     return chr(inside_code)
 
 def my_cn2an(cnDigitsStr):
+    if cnDigitsStr == '点':
+        return cnDigitsStr
+
     cnDigits = cnDigitsStr.split('点')
     result = ""
     for cnDigit in cnDigits:
@@ -48,6 +51,8 @@ def my_cn2an(cnDigitsStr):
                 result += str(cn2an.cn2an('一' + cnDigit, mode='smart')) + "."
     if not cnDigitsStr.endswith('点'):
         result = result[0:-1] #删除for循环中固定加的.
+        if result.endswith(".0") and not cnDigitsStr.endswith(".0"):
+            result = result[0:-2]
     if cnDigitsStr.startswith('点'):
         result = '.' + result
     return result
@@ -80,9 +85,23 @@ def norm_tokenize(line):
                 tokens.extend(an_digits.split())
                 cn_digits = ''
         elif '~' == ch:
+            if len(english) >0:
+                tokens.append(english)
+                english = ''
+            if len(cn_digits) >0:
+                an_digits = my_cn2an(cn_digits)
+                tokens.extend(an_digits.split())
+                cn_digits = ''
             tokens.append('到')
-        elif '得' == ch:
-            tokens.append('的')
+        # elif '得' == ch:
+        #     if len(english) >0:
+        #         tokens.append(english)
+        #         english = ''
+        #     if len(cn_digits) >0:
+        #         an_digits = my_cn2an(cn_digits)
+        #         tokens.extend(an_digits.split())
+        #         cn_digits = ''
+        #     tokens.append('的')
         else:
             if len(english) > 0:
                 tokens.append(english)
@@ -100,9 +119,9 @@ def norm_tokenize(line):
         tokens.extend(an_digits.split())
     return tokens
 
-string = norm_tokenize("是零四零五赛季")
+string = norm_tokenize("带来的22~23赛季")
 print(string)
-string = norm_tokenize("将会有3万多名球迷来到现场")
+string = norm_tokenize("英格兰足球超级联赛的第14轮")
 print(string)
 
 corpus_root_dir = corpus_root_dir.strip(r'/')
