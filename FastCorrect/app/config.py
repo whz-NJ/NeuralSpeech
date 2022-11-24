@@ -2,7 +2,7 @@ import os
 from configparser import ConfigParser
 
 config = ConfigParser()
-config.read(filenames='/root/fc/config/config.cfg', encoding='utf8')
+config.read(filenames=['/root/fc/config/config.cfg', './config/config.cfg'], encoding='utf8')
 
 # yolo 安装目录
 pwd = os.getcwd()

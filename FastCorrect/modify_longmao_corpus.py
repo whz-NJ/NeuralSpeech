@@ -220,9 +220,50 @@ def asr_replace_func(input_file_path, root_dir, normed_root_dir):
                         else:
                             tmp_orig_sentence += orig_ch
                     #是9 转写为 19 ，以讯飞为准
-                    elif orig_ch == '是' and hypo_ch == '1' and idx < (len(orig_sentence)-1):
+                    elif ((orig_ch == '是' and hypo_ch == '1') or (orig_ch == '1' and hypo_ch == '是')) and idx < (len(orig_sentence)-1):
                         next_orig_ch = orig_sentence[idx+1]
                         if '0' <= next_orig_ch <= '9':
+                            tmp_orig_sentence += hypo_ch
+                        else:
+                            tmp_orig_sentence += orig_ch
+                    elif ((orig_ch == '现' and hypo_ch == '前') or (orig_ch == '现' and hypo_ch == '前')) and idx < (len(orig_sentence) - 1):
+                        next_orig_ch = orig_sentence[idx + 1]
+                        if '场' == next_orig_ch:
+                            tmp_orig_sentence += hypo_ch
+                        else:
+                            tmp_orig_sentence += orig_ch
+                    elif ((orig_ch == '中' and hypo_ch == '终') or (orig_ch == '终' and hypo_ch == '中')) and idx < (len(orig_sentence) - 1):
+                        next_orig_ch = orig_sentence[idx + 1]
+                        if '点' == next_orig_ch:
+                            tmp_orig_sentence += hypo_ch
+                        else:
+                            tmp_orig_sentence += orig_ch
+                    elif ((orig_ch == '停' and hypo_ch == '挺') or (orig_ch == '挺' and hypo_ch == '停')) and idx < (len(orig_sentence) - 1):
+                        next_orig_ch = orig_sentence[idx + 1]
+                        if '好' == next_orig_ch:
+                            tmp_orig_sentence += hypo_ch
+                        else:
+                            tmp_orig_sentence += orig_ch
+                    elif ((orig_ch == '后' and hypo_ch == '候') or (orig_ch == '候' and hypo_ch == '后')) and idx < (len(orig_sentence) - 1):
+                        next_orig_ch = orig_sentence[idx + 1]
+                        if '补' == next_orig_ch:
+                            tmp_orig_sentence += hypo_ch
+                        else:
+                            tmp_orig_sentence += orig_ch
+                    elif ((orig_ch == '像' and hypo_ch == '向') or (orig_ch == '向' and hypo_ch == '像')):
+                        tmp_orig_sentence += hypo_ch
+                    elif ((orig_ch == '1' and hypo_ch == '十') or (orig_ch == '十' and hypo_ch == '1')):
+                        tmp_orig_sentence += hypo_ch
+                    elif ((orig_ch == '就' and hypo_ch == '又') or (orig_ch == '又' and hypo_ch == '就')):
+                        tmp_orig_sentence += hypo_ch
+                    elif ((orig_ch == '他' and hypo_ch == '她') or (orig_ch == '她' and hypo_ch == '他')):
+                        tmp_orig_sentence += hypo_ch
+                    elif ((orig_ch == '门' and hypo_ch == '们') or (orig_ch == '们' and hypo_ch == '门')):
+                        tmp_orig_sentence += hypo_ch
+                    if (orig_ch == '过' and hypo_ch == '过') and idx < (len(orig_sentence) - 1):
+                        next_orig_ch = orig_sentence[idx+1]
+                        next_hypo_ch = hypo_sentence[idx+1]
+                        if((next_orig_ch == '度' and next_hypo_ch == '渡') or (next_orig_ch == '渡' and next_hypo_ch == '度')):
                             tmp_orig_sentence += hypo_ch
                         else:
                             tmp_orig_sentence += orig_ch
@@ -291,6 +332,15 @@ def asr_replace_func(input_file_path, root_dir, normed_root_dir):
             hypo_sentence = hypo_sentence.strip(".")
             if len(orig_sentence) == 0 or len(hypo_sentence) == 0:
                 continue
+            orig_sentence = re.sub(r"([零一二三四五六七八九十百千万亿]+)(~)([零一二三四五六七八九十百千万亿]+)", r'\1到\3', orig_sentence)
+            hypo_sentence = re.sub(r"([零一二三四五六七八九十百千万亿]+)(~)([零一二三四五六七八九十百千万亿]+)", r'\1到\3', hypo_sentence)
+            orig_sentence = re.sub(r"([0-9]+)(到)([0-9]+)", r'\1~\3', orig_sentence)
+            hypo_sentence = re.sub(r"([0-9]+)(到)([0-9]+)", r'\1~\3', hypo_sentence)
+
+            orig_sentence = re.sub(r"([零一二三四五六七八九十百千万亿]+)(:)([零一二三四五六七八九十百千万亿]+)", r'\1比\3', orig_sentence)
+            hypo_sentence = re.sub(r"([零一二三四五六七八九十百千万亿]+)(:)([零一二三四五六七八九十百千万亿]+)", r'\1比\3', hypo_sentence)
+            orig_sentence = re.sub(r"([0-9]+)(比)([0-9]+)", r'\1:\3', orig_sentence)
+            hypo_sentence = re.sub(r"([0-9]+)(比)([0-9]+)", r'\1:\3', hypo_sentence)
             orig_sentence = ref_corpus_map[orig_sentence]
             pair = orig_sentence + "\t" + hypo_sentence + "\n"
             sentences.append(pair)
@@ -318,5 +368,5 @@ def preprocess_sports_asr(root_dir, normed_root_dir):
 # print(s2)
 # print(s1==s2)
 # preprocess_sports_asr(sports_asr_root_dir, normed_sports_asr_root_dir)
-# preprocess_sports_asr(aiui_football_asr_root_dir, normed_aiui_football_asr_root_dir)
+preprocess_sports_asr(aiui_football_asr_root_dir, normed_aiui_football_asr_root_dir)
 preprocess_sports_asr(std_aiui_football_asr_root_dir, normed_std_aiui_football_asr_root_dir)

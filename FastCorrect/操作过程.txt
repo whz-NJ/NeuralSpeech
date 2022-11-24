@@ -1,4 +1,4 @@
-本地导出aiui的 aiui_ist_sentence 表记录，执行 CorpusExtrator.java 抽取语料，输出 noised_aiui_football/五大联赛 目录下 *.txt 和 *_asr.txt 文件
+本地导出aiui的 aiui_ist_sentence 表记录，执行 CorpusExtrator.java 抽取语料，输出 noised_aiui_football/五大联赛 目录下 *.txt 和 *_asr.txt 文件（此时需要再标准化再转写）
 本地执行 gen_sports_corpus_txt.py 抽取sports_corpus目录的龙猫语料，转换为标准化格式的 .txt 文件，放在 sports_corpus2 目录，aiui 语料分成2部分：aiui_football2 目录下的分句标准化的正确文本、std_noised_aiui_football2 目录下标准化的正确文本-asr转写文本
 本地执行 IstNoiseGenerator.java 将语料(龙猫和aiui语料)通过 tts/ist 处理，得到原始语料、ASR转写语料对(要求每行输入是单句，因为IstNoiseGenerator不分句)，龙猫语料放在 noised_sports_corpus2，aiui语料保存在 noised_aiui_football2 目录
 本地执行 modify_longmao_corpus.py 调整龙猫和aiui语料中的数字风格保持和ASR模型一致，其中aiui语料分布在2个目录： noised_aiui_football2 和 std_noised_aiui_football2，龙猫语料在noised_sports_corpus2，处理后放在norm_开头的目录下

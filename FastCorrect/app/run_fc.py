@@ -8,6 +8,7 @@ from flask import request, make_response
 from loggers import bs_logger as logger
 from app.config import *
 from scripts import preprocess
+from app import restore_hotwords
 
 #sys.path.append("/root/fastcorrect/FC_utils")
 sys.path.append("./FC_utils")
@@ -24,8 +25,8 @@ logger.info(f'FastCorrect server with epoch {epoch} starting ...')
 if 1 == GPU_INDEX_ON_OFF:
     os.environ["CUDA_VISIBLE_DEVICES"] = str(GPU_DEVICE)
 
-# model_name_or_path = "/root/fc/fastcorrect/models/finetune.ftb"
 model_name_or_path = "/root/fc/models/finetune.ftb4"
+# model_name_or_path = r'C:\Users\OS\Downloads'
 iter_decode_max_iter = 0
 edit_thre = 0
 checkpoint_file = f"checkpoint{epoch}.pt"
@@ -40,15 +41,7 @@ transf_gec.eval()
 if 1 == GPU_INDEX_ON_OFF:
     transf_gec.cuda()
 
-webapp = Flask(__name__)
-
-@webapp.route('/fast_correct', methods=['POST'])
-def fast_correct():
-    # parse request body
-    # requst_body = request.get_data(as_text=True).decode('utf-8')
-    requst_body = request.get_data(as_text=True)
-    request_json = json.loads(requst_body)
-    text = request_json['text']
+def correct(text):
     logger.info("text to be corrected: " + text)
     try:
         start = time.time()
@@ -66,6 +59,8 @@ def fast_correct():
                     break
                 logger.info(f"tokens and werdur: {', '.join(token + ':' + str(werdur) for (token, werdur) in zip(tokens, wer_dur_pred))}")
                 logger.info(f"tokens predicted: {pred_tokens}")
+                pred_tokens, wer_dur_pred = restore_hotwords.resotre(tokens, pred_tokens, wer_dur_pred)
+                logger.info(f"tokens predicted2: {pred_tokens}")
             else:
                 pred_tokens = [sentence.strip()]
                 wer_dur_pred = [1]
@@ -75,7 +70,54 @@ def fast_correct():
         end = time.time()
         cost = str(round(end - start, ndigits=3))
         logger.info(f"cost {cost} seconds\n")
+        return corrections
+    except Exception as e:
+        logger.error(str(e), exc_info=True)
+        return []
 
+#correct("卡塔尔世界杯")
+
+webapp = Flask(__name__)
+@webapp.route('/update_hotwords', methods=['POST'])
+def update_hotwords():
+    requst_body = request.get_data(as_text=True)
+    request_json = json.loads(requst_body)
+    hotwords_new = request_json['hotwords_new']
+    hotwords_delete = request_json['hotwords_delete']
+    update_result = restore_hotwords.update_hotwords(hotwords_new, hotwords_delete)
+
+    result = {}
+    result['result_code'] = '200'
+    result["message"] = 'ok'
+    if not update_result:
+        result['result_code'] = '300'
+        result["message"] = 'updating'
+    json_string = json.dumps(result, ensure_ascii=False)
+    response = make_response(json_string)
+    response.headers['Content-Type'] = "application/json"
+    return response
+
+@webapp.route('/dump_hotwords', methods=['POST'])
+def dump_hotwords():
+    hotwords = restore_hotwords.dump_hotwords()
+
+    result = {}
+    result['result_code'] = '200'
+    result["hotwords"] = hotwords
+    json_string = json.dumps(result, ensure_ascii=False)
+    response = make_response(json_string)
+    response.headers['Content-Type'] = "application/json"
+    return response
+
+@webapp.route('/fast_correct', methods=['POST'])
+def fast_correct():
+    # parse request body
+    # requst_body = request.get_data(as_text=True).decode('utf-8')
+    requst_body = request.get_data(as_text=True)
+    request_json = json.loads(requst_body)
+    text = request_json['text']
+    corrections = correct(text)
+    if corrections and len(corrections) > 0:
         result = {}
         result['result_code'] = '200'
         result["corrections"] = corrections
@@ -84,9 +126,7 @@ def fast_correct():
         response.headers['Content-Type'] = "application/json"
         return response
 
-    except Exception as e:
-        logger.error(str(e), exc_info=True)
-        logger.error(str(e), exc_info=True)
+    else:
         result = {}
         result['result_code'] = '300'
         result["fc_text"] = ""
@@ -94,6 +134,7 @@ def fast_correct():
         response = make_response(json_string, ensure_ascii=False)
         response.headers['Content-Type'] = "application/json"
         return response
+
 
 if __name__ == '__main__':
     webapp.config['JSON_AS_ASCII'] = False

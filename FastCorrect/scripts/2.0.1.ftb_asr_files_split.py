@@ -3,7 +3,7 @@ import codecs
 import random
 
 sports_split_rate = [0.95, 0.00, 0.05] # 558篇 (28篇测试)
-aiui_split_rate = [0.80, 0.20, 0.00] # 128篇 (25篇验证)
+aiui_split_rate = [0.90, 0.10, 0.00] # 128篇 (25篇验证)
 # processed_corpus_root_dir = "/root/std_ftb_sports_corpus_en"
 std_sports_corpus_root_dir = "/root/std_noised_sports_corpus3"
 std_aiui_football_corpus_root_dir = "/root/std_noised_aiui_football3" #从aiui系统导出的语料
