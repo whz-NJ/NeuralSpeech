@@ -3,7 +3,7 @@ import os
 import json
 
 #corpus_root_dir=r'C:\工作任务\AIUI\NLP模型测试\侯德成语料2\\'
-corpus_root_dir=r'C:\test\\test2'
+corpus_root_dir=r'C:\test\test2\valid'
 cn_digit_map = {}
 cn_digit_map['零'] = '0'
 cn_digit_map['一'] = '1'

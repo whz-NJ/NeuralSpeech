@@ -671,13 +671,13 @@ def calculate_wer_dur_v1(hypo_list, ref_list, return_path_only=False):
     len_ref = len(ref_list)
     for token in hypo_list:
         if len(token) == 1:
-            if '\u4e00' <= token[0] <= '\u9fa5':  # 汉字
+            if '\u4e00' <= token[0] <= '\u9fa5' or '\u3400' <= token[0] <= '\u4DB5':  # 汉字
                 ch = token[0]
                 if not g2pM_dict.__contains__(ch):  #英文字母或特殊符号的拼音是它本身，不加入 g2pM_dict
                     g2pM_dict[ch] = preprocess.unify_pinyin(model(ch, tone=False, char_split=True)[0])
     for token in ref_list:
         if len(token) == 1:
-            if '\u4e00' <= token[0] <= '\u9fa5':  # 汉字
+            if '\u4e00' <= token[0] <= '\u9fa5' or '\u3400' <= token[0] <= '\u4DB5':  # 汉字
                 ch = token[0]
                 if not g2pM_dict.__contains__(ch): #英文字母或特殊符号的拼音是它本身，不加入 g2pM_dict
                     g2pM_dict[ch] = preprocess.unify_pinyin(model(ch, tone=False, char_split=True)[0])

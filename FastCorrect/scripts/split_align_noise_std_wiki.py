@@ -266,7 +266,7 @@ def noise_sentence(sentence):
         if random.random() < noise_ratio:
             if tok == ":":
                 # 给汉字后面的冒号/句末的冒号/不是两个数字中间的冒号加噪声，只可能是删除该冒号
-                if prev_tok == "" or ('\u4e00' <= prev_tok <= '\u9fa5' or prev_tok < '0' or prev_tok > '9') \
+                if prev_tok == "" or ('\u4e00' <= prev_tok <= '\u9fa5' or '\u3400' <= prev_tok <= '\u4DB5' or prev_tok < '0' or prev_tok > '9') \
                         or i == (tokens_num -1) or (tokens[i+1] < '0' or tokens[i+1] > '9'):
                     i += 1
                     filtered_tokens.append(tok)
@@ -284,7 +284,7 @@ def noise_sentence(sentence):
 
             if tok == ".":
                 # 给汉字后面的点号/句末的点号/不是两个数字中间的点号加噪声，只可能是删除该点号
-                if prev_tok == "" or ('\u4e00' <= prev_tok <= '\u9fa5' or prev_tok < '0' or prev_tok > '9') \
+                if prev_tok == "" or ('\u4e00' <= prev_tok <= '\u9fa5' or '\u3400' <= prev_tok <= '\u4DB5' or prev_tok < '0' or prev_tok > '9') \
                         or i == (tokens_num -1) or (tokens[i+1] < '0' or tokens[i+1] > '9'):
                     i += 1
                     filtered_tokens.append(tok)
@@ -296,22 +296,8 @@ def noise_sentence(sentence):
                 i += 1
                 filtered_tokens.append(tok)
                 continue
-            if tok == "、" or tok == '·' or tok == "'":
-                #这些字符噪声只有删除
-                i += 1
-                filtered_tokens.append(tok)
-                prev_tok = tok
-                continue
-            if tok in preprocess.kept_char_map: #找特殊符号对应的相似读音的中文汉字
-                candidates = trie_dict.get_pairs(tokens[i : i+1])
-                matched_info = np.random.choice(candidates)
-                new_tokens.extend(matched_info.sim_words)
-                prev_tok = tok
-                filtered_tokens.extend(tokens[i:i + matched_info.matched_tokens_num])
-                i += matched_info.matched_tokens_num
-                continue
             matched_info = trie_dict.get_pairs(tokens[i:])
-            if len(matched_info) > 0:
+            if len(matched_info) > 0: #有混淆字符集
                 if matched_info[-1].matched_tokens_num > 2:
                     all_op = all_op3
                     prob_op = prob_op3
@@ -329,6 +315,11 @@ def noise_sentence(sentence):
                 prev_tok = tok
                 filtered_tokens.extend(tokens[i : i+matched_tokens_num])
                 i += matched_tokens_num
+                continue
+            else: #找不到混淆字符的，噪声就是删除
+                i += 1
+                filtered_tokens.append(tok)
+                prev_tok = tok
                 continue
 
         new_tokens.append(tok) #不加噪声

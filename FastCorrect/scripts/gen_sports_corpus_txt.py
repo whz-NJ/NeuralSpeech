@@ -12,12 +12,12 @@ processed_sports_corpus_root_dir = "../sports_corpus2"
 # aiui_football_dir = "../noised_aiui_football"
 # processed_aiui_football_dir = "../aiui_football2"
 # std_aiui_football_dir = "../std_noised_aiui_football2" #保存标准化后的正确语料-ASR语料对列表文件的目录
-# aiui_football_dir = "../noised_aiui_football" #包含 *_asr.txt 和 *.txt 两种文件
-# processed_aiui_football_dir = "../aiui_football2" # 只有标准化的 *.txt文件
-# std_aiui_football_dir = "../std_noised_aiui_football2" #保存标准化后的正确语料-ASR语料对列表文件的目录(std_*_asr.txt文件)
-aiui_football_dir = r'C:\corpus\2022_10\new' #包含 *_asr.txt 和 *.txt 两种文件
-processed_aiui_football_dir = r'C:\corpus\2022_10\new2' # 只有标准化的 *.txt文件
-std_aiui_football_dir = r'C:\corpus\2022_10\std_new2' #保存标准化后的正确语料-ASR语料对列表文件的目录(std_*_asr.txt文件)
+aiui_football_dir = "../noised_aiui_football" #包含 *_asr.txt 和 *.txt 两种文件
+processed_aiui_football_dir = "../aiui_football2" # 只有标准化的 *.txt文件
+std_aiui_football_dir = "../std_noised_aiui_football2" #保存标准化后的正确语料-ASR语料对列表文件的目录(std_*_asr.txt文件)
+# aiui_football_dir = r'C:\corpus\2022_10\new' #包含 *_asr.txt 和 *.txt 两种文件
+# processed_aiui_football_dir = r'C:\corpus\2022_10\new2' # 只有标准化的 *.txt文件
+# std_aiui_football_dir = r'C:\corpus\2022_10\std_new2' #保存标准化后的正确语料-ASR语料对列表文件的目录(std_*_asr.txt文件)
 
 def replace_dot_path(path):
     result = ""
@@ -75,8 +75,8 @@ def loadSportsCorpus(root_dir):
                 saved_corpus_path = saved_corpus_path[:-4] + "txt"
             elif saved_corpus_path.endswith(".doc"):
                 saved_corpus_path = saved_corpus_path[:-3] + "txt"
-            if os.path.exists(saved_corpus_path): #跳过已经处理过的文件
-                continue
+            # if os.path.exists(saved_corpus_path): #跳过已经处理过的文件
+            #     continue
 
             corpus_list = []
             if file.endswith(".doc"):
@@ -97,7 +97,7 @@ def loadSportsCorpus(root_dir):
             if file_path.endswith(".docx"):
                 doc = open_docx_wps(file_path)
                 for paragraph in doc.paragraphs[1:]:
-                    sentences = preprocess.normAndTokenize(paragraph.text, min_sentence_len=2, split_sentences=True)
+                    sentences = preprocess.normAndTokenize(paragraph.text, min_sentence_len=2)
                     for sentence in sentences:
                         sentence = sentence.replace(" ", "")
                         corpus_list.append(sentence + "\n")
@@ -105,7 +105,7 @@ def loadSportsCorpus(root_dir):
             elif file_path.endswith(".txt"):
                 with open(file_path, 'r', encoding='utf-8') as infile:
                     for line in infile.readlines():
-                        sentences = preprocess.normAndTokenize(line, min_sentence_len=2, split_sentences=True)
+                        sentences = preprocess.normAndTokenize(line, min_sentence_len=2)
                         for sentence in sentences:
                             sentence = sentence.replace(" ", "")
                             corpus_list.append(sentence + "\n")
@@ -130,31 +130,29 @@ def loadAiuiFootballCorpus(root_dir):
 
             corpus_list = []
             with open(file_path, 'r', encoding='utf-8') as infile:
-                    if file.endswith("_asr.txt"): #有正确语料和ASR输出语料，开始标准化/分句
+                    if file.endswith("_asr.txt"): #有正确语料和ASR输出语料，开始标准化
                         for line in infile.readlines():
                             fields = line.split("\t")
                             if len(fields) != 2:
                                 continue
                             ref_sentences = fields[0]
                             hypo_sentences = fields[1]
-                            ref_sentences = preprocess.normAndTokenize(ref_sentences, min_sentence_len=2,
-                                                                       split_sentences=True)
-                            hypo_sentences = preprocess.normAndTokenize(hypo_sentences, min_sentence_len=2,
-                                                                        split_sentences=True)
+                            ref_sentences = preprocess.normAndTokenize(ref_sentences, min_sentence_len=2)
+                            hypo_sentences = preprocess.normAndTokenize(hypo_sentences, min_sentence_len=2)
                             if not ref_sentences or not hypo_sentences or len(ref_sentences) != len(hypo_sentences):
                                 continue
                             for ref_sentence, hypo_sentence in zip(ref_sentences, hypo_sentences):
                                 ref_hypo = ref_sentence + "\t" + hypo_sentence
                                 corpus_list.append(ref_hypo + "\n")
-                    else: #只有正确语料，开始标准化/分句
+                    else: #只有正确语料，开始标准化
                         for line in infile.readlines():
                             corpus = line.strip()
-                            sentences = preprocess.normAndTokenize(corpus, min_sentence_len=2, split_sentences=True)
+                            sentences = preprocess.normAndTokenize(corpus, min_sentence_len=2)
                             for sentence in sentences:
                                 sentence = sentence.replace(" ", "") #删除中间的空格
                                 corpus_list.append(sentence + "\n")
             with open(saved_corpus_path, 'w', encoding='utf-8') as outfile:
                 outfile.writelines(corpus_list)
 
-#loadSportsCorpus(sports_corpus_root_dir)
+loadSportsCorpus(sports_corpus_root_dir)
 loadAiuiFootballCorpus(aiui_football_dir)

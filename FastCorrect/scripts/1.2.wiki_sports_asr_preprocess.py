@@ -187,14 +187,14 @@ def run():
                     # 强制纠错中的token一定要出现在词表中
                     preprocess.tokens_count_dict[tmp_token] = MIN_RULE_TOKEN_COUNT + count + 1
 
-    #将 aiui_football转写语料和龙猫标注语料合并
+    # 将 aiui_football转写语料和龙猫标注语料合并
     merge_preprocess_aiui_football_asr(aiui_football_asr_root_dir, std_aiui_football_asr_root_dir0, std_aiui_football_asr_root_dir)
-    #处理各运动项目ASR转写出的语料
+    # 处理各运动项目ASR转写出的语料
     preprocess_sports_asr(sports_asr_root_dir, std_sports_asr_root_dir)
-    #处理各wiki文件
-    # for data_name in wiki_data_names:
-    #     wiki_replace_func(os.path.join(wiki_data_path, data_name), std_wiki_data_root_dir)
-    #     print('{0} has been processed.'.format(data_name))
+    # 处理各wiki文件
+    for data_name in wiki_data_names:
+        wiki_replace_func(os.path.join(wiki_data_path, data_name), std_wiki_data_root_dir)
+        print('{0} has been processed.'.format(data_name))
 
     #保存词表
     with codecs.open(os.path.join(std_sports_asr_root_dir, 'dict.CN_char.txt'), 'w', 'utf-8') as dictfile:

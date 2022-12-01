@@ -30,7 +30,7 @@ def split_tokens(line):
                 tokens.append(english.upper()) # 字母统一用大写
             english = ""
     for ch in line:
-        if '\u4e00' <= ch <= '\u9fa5': #汉字
+        if '\u4e00' <= ch <= '\u9fa5' or '\u3400' <= ch <= '\u4DB5': #汉字
             add_english()
             tokens.append(Q2B(ch))
         elif ('a' <= ch <= 'z') or ('A' <= ch <= 'Z'): #英文

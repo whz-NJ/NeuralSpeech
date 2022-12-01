@@ -1,7 +1,7 @@
-# rule_file='./force_correction_rules.txt'
-# filtered_rule_file='./std_force_correction_rules.txt'
-rule_file='./test_rules.txt'
-filtered_rule_file='./std_test_rules.txt'
+rule_file='./force_correction_rules.txt'
+filtered_rule_file='./std_force_correction_rules.txt'
+# rule_file='./test_rules.txt'
+# filtered_rule_file='./std_test_rules.txt'
 
 from g2pM import G2pM
 import preprocess
@@ -21,7 +21,10 @@ with open(rule_file, 'r', encoding='utf-8') as infile:
             orig_tokens.extend(sentence.split())
         orig_py = ''
         for token in orig_tokens:
-            orig_py += preprocess.g2pM_dict[token]
+            if len(token) == 1:
+                ch = token[0]
+                if '\u4e00' <= ch <= '\u9fa5' or '\u3400' <= ch <= '\u4DB5':
+                    orig_py += preprocess.g2pM_dict[ch]
         if len(orig_py) == 0:
             print('skip too short rule: ' + rule.strip())
             continue
@@ -33,7 +36,10 @@ with open(rule_file, 'r', encoding='utf-8') as infile:
             error_tokens.extend(sentence.split())
         error_py = ''
         for token in error_tokens:
-            error_py += preprocess.g2pM_dict[token]
+            if len(token) == 1:
+                ch = token[0]
+                if '\u4e00' <= ch <= '\u9fa5' or '\u3400' <= ch <= '\u4DB5':
+                    error_py += preprocess.g2pM_dict[ch]
         if len(error_py) == 0:
             print('skip too short rule: ' + rule.strip())
             continue
