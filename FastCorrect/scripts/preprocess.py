@@ -85,6 +85,10 @@ for ch in r"%@.*+-=/×÷~&、·':<>":
 
 def Q2B_F2J(uchar):
     """全角转半角/繁体转简体"""
+
+    if uchar in kept_char_map or uchar in seperator_map:
+        return uchar
+
     inside_code = ord(uchar)
     if inside_code == 0x3000:
         inside_code = 0x0020
@@ -93,7 +97,6 @@ def Q2B_F2J(uchar):
     if inside_code < 0x0020 or inside_code > 0x7e:  # 转完之后不是半角字符返回原来的字符
         return zhconv.convert(uchar, 'zh-hans')
     return zhconv.convert(chr(inside_code), 'zh-hans')
-
 
 def unify_pinyin(pinyin):
     py = pinyin
@@ -321,7 +324,7 @@ def my_cn2an(cnDigitsStr):
                 try:
                     result += str(cn2an.cn2an(cnDigit, mode='smart')) + "."
                 except: #可能是两串中文数字连在一起导致
-                    for idx in range(1, len(cnDigit)-1):
+                    for idx in range(1, len(cnDigit)):
                         cnDigit1 = cnDigit[0: idx]
                         cnDigit2 = cnDigit[idx:]
                         result1 = None
@@ -335,7 +338,7 @@ def my_cn2an(cnDigitsStr):
                             result1 = None
                             result2 = None
                             continue
-                    if not result1 or not result2:
+                    if result1 == None or result2 == None:
                         return ""
                     else:
                         result += str(result1) + str(result2) + "."
@@ -346,7 +349,7 @@ def my_cn2an(cnDigitsStr):
     if cnDigitsStr.startswith('点'):
         result = '.' + result
     return result
-
+#my_cn2an("十零")
 #提取中文数字
 def extract_cn_digits(line, tokens, start_index=0, cn_to_an = False):
     digits_count = 0
@@ -407,7 +410,7 @@ def extract_cn_digits(line, tokens, start_index=0, cn_to_an = False):
     return digits_count
 
 #拆成独立发音的 tokens
-def normAndTokenize(line, min_sentence_len=2, split_sentences=False):
+def normAndTokenize(line, min_sentence_len=2, split_sentences=False, drop_seperator=False):
     sentences = []
     def append_english_digits(append_english=False, append_digits=False, append_cn_digits=False, cn_to_an = False):
         nonlocal tokens, english, digits, cn_digits
@@ -487,6 +490,8 @@ def normAndTokenize(line, min_sentence_len=2, split_sentences=False):
             append_english_digits(True, True, True) #如果有中文数字，保持原样，不转换为阿拉伯数字
             if not split_sentences: #不分句（处理ASR输出或强制纠错规则时）
                 prev_ch = ch
+                if not drop_seperator:
+                    tokens.append(ch)  # 将分句的标点符号保存下来
                 idx = idx + 1  # 丢弃，跳到下一个字符
                 continue
             if len(tokens) >= min_sentence_len: # 分句且当前句子token数满足要求
@@ -549,10 +554,10 @@ def normAndTokenize(line, min_sentence_len=2, split_sentences=False):
                 if len(cn_digits) > 0 and prev_ch in cn_digit_map and next_ch in cn_digit_map:
                     digits1 = []
                     #先提取第一个数
-                    extract_cn_digits(cn_digits, digits1, 0, False, True)
+                    extract_cn_digits(cn_digits, digits1, 0, False)
                     #再提取第二个数
                     digits2 = []
-                    digits_num = extract_cn_digits(line, digits2, idx+1, False, True)
+                    digits_num = extract_cn_digits(line, digits2, idx+1, False)
                     idx += (1+digits_num)
                     next_next_ch = ""
                     if idx < len(line):
@@ -592,6 +597,12 @@ def normAndTokenize(line, min_sentence_len=2, split_sentences=False):
 
 
 def main():
+    # print(normAndTokenize("朋友们，随着主裁判韦伯的一声哨响，二零一四年巴西世界杯小组赛C组第二轮，",
+    #                       keep_sep_chars=True, split_sentences=False))
+    # print(normAndTokenize("现在时间是03:50，比分是3:5", keep_sep_chars=True, split_sentences=False))
+
+    print(normAndTokenize("四十比三十八大二"))
+    print(normAndTokenize("四十比三十八"))
     print(normAndTokenize("在2022年世界杯上"))
     print(normAndTokenize("现在时间是03:50，比分是3:5"))
     print(normAndTokenize("22 23赛季"))

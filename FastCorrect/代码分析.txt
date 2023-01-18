@@ -26,3 +26,8 @@ fastcorrect_model.py:363: DecoderOut.wer_dur_pred
     else:
         wer_dur_pred = wer_dur_pred.squeeze(-1).round().long().clamp_(min=0)
         length_tgt = wer_dur_pred.sum(-1)
+
+
+TransformerEncoder.forward()
+    B(批次大小=240) T(句子长度=37) C(embedding维数=512) => T B C
+
