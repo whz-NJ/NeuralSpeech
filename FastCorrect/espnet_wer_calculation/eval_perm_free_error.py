@@ -135,7 +135,7 @@ def merge_results(results):
         j = results[x]
 
         ks = j["utts"].keys()
-        loggers.info(x + ": has " + str(len(ks)) + " utterances")
+        #loggers.info(x + ": has " + str(len(ks)) + " utterances")
 
         if len(intersec_keys) > 0:
             intersec_keys = intersec_keys.intersection(set(ks))
@@ -143,9 +143,9 @@ def merge_results(results):
             intersec_keys = set(ks)
         rslt_lst.append(j)
 
-    loggers.info(
-        "After merge, the result has " + str(len(intersec_keys)) + " utterances"
-    )
+    #loggers.info(
+    #    "After merge, the result has " + str(len(intersec_keys)) + " utterances"
+    #)
 
     # merging results
     dic = dict()

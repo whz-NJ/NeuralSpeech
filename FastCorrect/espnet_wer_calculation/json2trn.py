@@ -40,14 +40,14 @@ def convert(jsonf, dic, refs, hyps, num_spkrs=1):
 
     # loggers info
     logfmt = "%(asctime)s (%(module)s:%(lineno)d) %(levelname)s: %(message)s"
-    loggers.basicConfig(level=loggers.INFO, format=logfmt)
-    loggers.info(get_commandline_args())
+    #loggers.basicConfig(level=loggers.INFO, format=logfmt)
+    #loggers.info(get_commandline_args())
 
-    loggers.info("reading %s", jsonf)
+    #loggers.info("reading %s", jsonf)
     with codecs.open(jsonf, "r", encoding="utf-8") as f:
         j = json.load(f)
 
-    loggers.info("reading %s", dic)
+    #loggers.info("reading %s", dic)
     with codecs.open(dic, "r", encoding="utf-8") as f:
         dictionary = f.readlines()
     char_list = [entry.split(" ")[0] for entry in dictionary]

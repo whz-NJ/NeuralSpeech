@@ -30,8 +30,8 @@ if __name__ == "__main__":
 
     # loggers info
     logfmt = "%(asctime)s (%(module)s:%(lineno)d) %(levelname)s: %(message)s"
-    loggers.basicConfig(level=loggers.INFO, format=logfmt)
-    loggers.info(get_commandline_args())
+    #loggers.basicConfig(level=loggers.INFO, format=logfmt)
+    #loggers.info(get_commandline_args())
 
     # make intersection set for utterance keys
     js = {}
@@ -39,9 +39,9 @@ if __name__ == "__main__":
         with codecs.open(x, encoding="utf-8") as f:
             j = json.load(f)
         ks = j["utts"].keys()
-        loggers.debug(x + ": has " + str(len(ks)) + " utterances")
+        #loggers.debug(x + ": has " + str(len(ks)) + " utterances")
         js.update(j["utts"])
-    loggers.info("new json has " + str(len(js.keys())) + " utterances")
+    #loggers.info("new json has " + str(len(js.keys())) + " utterances")
 
     # ensure "ensure_ascii=False", which is a bug
     jsonstring = json.dumps(
