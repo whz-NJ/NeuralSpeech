@@ -1,19 +1,26 @@
+# encoding: utf-8
 import json
 import bson
 import os
 import re
 import sys
 import glob
-input_file_dirs=[r'/root/cal_wer/input/hdc/', r'/root/cal_wer/input/qyh/']
-output_file_dirs = [r'/root/cal_wer/output/hdc/', r'/root/cal_wer/output/qyh/']
+import pdb
+s1 = {'a', 'b'}
 
-input_file_dirs=[r'/root/cal_wer/input/test']
-output_file_dirs=[r'/root/cal_wer/output/test']
+# input_file_dirs=[r'/root/cal_wer/input/hdc/', r'/root/cal_wer/input/qyh/']
+# output_file_dirs = [r'/root/cal_wer/output/hdc/', r'/root/cal_wer/output/qyh/']
+#
+# input_file_dirs=[r'/root/cal_wer/input/test']
+# output_file_dirs=[r'/root/cal_wer/output/test']
+
+input_file_dirs=[r'/root/cal_wer/input/whz']
+output_file_dirs = [r'/root/cal_wer/output/whz']
 
 seperator_map = {}
-for ch in r':：,，;；<>.。！!？?()（）[]【】「」—“”':
+for ch in r':：,，;；<>.。！!？?()（）[]【】「」—“”'+"\n":
     seperator_map[ch] = ch
-ignored_tokens = set() # 忽略 {}，这个可能是转写中间出现的错误符号
+ignored_tokens = set()
 for ch in r'{}"':
     ignored_tokens.add(ch)
 
@@ -57,7 +64,6 @@ def get_tokens(line):
         return True
 
     tokens = []
-    idx_seperator_map = {}
     english = ''
     digits = ''
     cn_digits = ''
@@ -70,7 +76,7 @@ def get_tokens(line):
             continue
         elif seperator_map.__contains__(ch): #句子分隔符
             append_english_digits(True, True, True) #如果有中文数字，保持原样，不转换为阿拉伯数字
-            idx_seperator_map[len(tokens)] = ch #相同位置只保留一个 seperator
+            tokens.append(ch)
         elif '0' <= ch <= '9': #数字
             append_english_digits(append_english=True, append_cn_digits=True) #如果有中文数字，保持原样，不转换为阿拉伯数字
             digits += ch
@@ -85,32 +91,40 @@ def get_tokens(line):
         idx = idx + 1
     #一行扫描结束
     append_english_digits(True, True, True) #中文数字保持原样，不转换为阿拉伯数字
-    return tokens, idx_seperator_map
+    if len(tokens) > 0:
+        tokens.append('\n')
+    # pdb.set_trace()
+    return tokens
 
 def load_tokens_line_info(txt_file_path):
     idx_seperator_map = {}
+    token_idx_map = {}
     tokens_in_file = []
-    token_idx = 0
     txt_file = open(txt_file_path, 'r', encoding='UTF-8')
+    tokens_cnt = 0
     for txt_line in txt_file:
+        txt_line = txt_line.strip().rstrip('"}')
         tokens = []
         if txt_line.find('"text":') >= 0:
-            txt_line = txt_line.strip().rstrip('"}')
             m = re.search(r'\{?"s":\d+\,"e":\d+\,"text":"(\S*)', txt_line, re.IGNORECASE)
             if m:
                 text = m.group(1)
-                tokens,line_idx_seperator_map = get_tokens(text)
+                tokens = get_tokens(text)
         else:
-            tokens,line_idx_seperator_map = get_tokens(txt_line)
+            tokens = get_tokens(txt_line)
         if len(tokens) > 0:
-            tokens_in_file.extend(tokens)
-            for (idx, seperator) in line_idx_seperator_map.items():
-                idx_seperator_map[token_idx + idx] = seperator
-            token_idx += len(tokens)
-            idx_seperator_map[token_idx] = '\n'
+            for idx in range(len(tokens)):
+                token = tokens[idx]
+                if not seperator_map.__contains__(token):
+                    token_idx_map[len(tokens_in_file)] = tokens_cnt + idx
+                    tokens_in_file.append(token)
+                else:
+                    idx_seperator_map[tokens_cnt+idx] = token
+            #pdb.set_trace()
+            tokens_cnt += len(tokens)
 
     txt_file.close()
-    return tokens_in_file, idx_seperator_map
+    return tokens_in_file, idx_seperator_map, token_idx_map
 
 def create_eval_json_file(label_tokens, asr_tokens, output_file_path):
     tts_objects = {}
@@ -242,8 +256,8 @@ def main():
             label_asr_word_pairs = []
     for (label_file_path, asr_file_path, output_file_path) in get_label_asr_output_files():
         print(f'begin to process file: {label_file_path} ...')
-        label_tokens, idx_seperator_map = load_tokens_line_info(label_file_path)
-        asr_tokens, _ = load_tokens_line_info(asr_file_path)
+        label_tokens, idx_seperator_map, token_idx_map = load_tokens_line_info(label_file_path)
+        asr_tokens, _, _ = load_tokens_line_info(asr_file_path)
         sorted_seperator_idx_list = sorted(idx_seperator_map.keys())
         idx_seperator_list = [(idx, idx_seperator_map[idx]) for idx in sorted_seperator_idx_list]
         label_file_name = os.path.basename(label_file_path)
@@ -299,21 +313,25 @@ def main():
                 ins_words_cnt += (-1 * wer_dur - 1) #ref文本添加了 wer_dur-1个字
                 err_snt_flag = True
                 hyp_idx += (-1 * wer_dur)
-            if ref_token_idx == (seperator_idx-1):
-                if seperator != "\n":
-                    ref_line += seperator
-                else:
-                    append_del_sub_words(append_del=True, append_sub=True)
-                    ref_line += seperator
-                    ref_lines.append(ref_line)
-                    ref_line = ""
-                    snt_cnt += 1
-                    if err_snt_flag:
-                        err_snt_cnt += 1
-                    err_snt_flag = False
-                hypo_seperator_idx += 1
-                if(hypo_seperator_idx < len(idx_seperator_list)):
-                    (seperator_idx, seperator) = idx_seperator_list[hypo_seperator_idx]
+            token_idx = token_idx_map[ref_token_idx]
+            if token_idx == (seperator_idx-1):
+                last_seperator_idx = seperator_idx-1;
+                while seperator_idx == (last_seperator_idx+1):
+                    if seperator != "\n":
+                        ref_line += seperator
+                    else:
+                        append_del_sub_words(append_del=True, append_sub=True)
+                        ref_line += seperator
+                        ref_lines.append(ref_line)
+                        ref_line = ""
+                        snt_cnt += 1
+                        if err_snt_flag:
+                            err_snt_cnt += 1
+                        err_snt_flag = False
+                    last_seperator_idx = seperator_idx
+                    hypo_seperator_idx += 1
+                    if(hypo_seperator_idx < len(idx_seperator_list)):
+                        (seperator_idx, seperator) = idx_seperator_list[hypo_seperator_idx]
         assert hyp_idx == len(asr_tokens)
 
         if len(ref_line) > 0:
